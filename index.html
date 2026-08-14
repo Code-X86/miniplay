@@ -18,7 +18,31 @@
       --amber: #ffad0a;
       --accent: var(--green);
       --sidebar: 222px;
+      --sidebar-bg: rgba(4, 9, 18, .88);
+      --body-glow: rgba(18, 45, 77, .22);
+      --shadow: rgba(0, 0, 0, .18);
+      --dim: #74839a;
+      --overlay: rgba(0, 0, 0, .85);
     }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #eef2f8;
+      --panel: #ffffff;
+      --panel-2: #f5f8fd;
+      --line: #d2dbea;
+      --text: #0c1420;
+      --muted: #55647a;
+      --green: #3f8a00;
+      --amber: #a76400;
+      --sidebar-bg: rgba(255, 255, 255, .9);
+      --body-glow: rgba(120, 170, 255, .28);
+      --shadow: rgba(15, 30, 60, .12);
+      --dim: #6b7a90;
+      --overlay: rgba(12, 20, 32, .62);
+    }
+
+    /* Card preview art is illustrative and stays dark in both themes. */
 
     * { box-sizing: border-box; }
 
@@ -27,7 +51,7 @@
     body {
       margin: 0;
       background:
-        radial-gradient(circle at 78% 0%, rgba(18, 45, 77, .22), transparent 32rem),
+        radial-gradient(circle at 78% 0%, var(--body-glow), transparent 32rem),
         var(--bg);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -46,7 +70,7 @@
       flex-direction: column;
       padding: 28px 16px 20px;
       border-right: 1px solid var(--line);
-      background: rgba(4, 9, 18, .88);
+      background: var(--sidebar-bg);
       backdrop-filter: blur(18px);
     }
 
@@ -91,7 +115,7 @@
       align-items: center;
       gap: 9px;
       margin: auto 10px 0;
-      color: #74839a;
+      color: var(--dim);
       font-size: 11px;
       font-weight: 800;
       letter-spacing: .08em;
@@ -108,7 +132,7 @@
 
     .playtime {
       margin: 18px 10px 0;
-      color: #74839a;
+      color: var(--dim);
       font-size: 10px;
       font-weight: 800;
       letter-spacing: .08em;
@@ -145,7 +169,7 @@
     }
 
     .subtitle { margin: 11px 0 0; color: var(--muted); font-size: 16px; }
-    .view-count { color: #718097; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+    .view-count { color: var(--dim); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
 
     .library-tools {
       display: grid;
@@ -194,6 +218,8 @@
       gap: 9px;
     }
 
+    .categories[hidden] { display: none; }
+
     .category-button {
       padding: 9px 12px;
       border: 1px solid var(--line);
@@ -227,7 +253,7 @@
       border: 1px solid color-mix(in srgb, var(--card-accent) 72%, var(--line));
       border-radius: 14px;
       background: var(--panel);
-      box-shadow: 0 18px 45px rgba(0, 0, 0, .18);
+      box-shadow: 0 18px 45px var(--shadow);
       transition: transform .2s ease, box-shadow .2s ease;
     }
 
@@ -878,7 +904,7 @@
       cursor: pointer;
     }
 
-    .tool-button:hover { border-color: var(--line); background: #151f2e; color: var(--text); }
+    .tool-button:hover { border-color: var(--line); background: var(--panel); color: var(--text); }
     .tool-button svg { width: 17px; height: 17px; }
 
     .stage { position: relative; flex: 1; min-height: 0; background: #000; }
@@ -940,7 +966,7 @@
       padding: 22px;
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: rgba(9, 14, 24, 0.88);
+      background: var(--panel);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
@@ -949,7 +975,7 @@
     .debug-panel pre {
       margin: 0;
       overflow-x: auto;
-      color: #d7e2f1;
+      color: var(--text);
       font: 13px/1.65 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
       white-space: pre-wrap;
     }
@@ -962,7 +988,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.85);
+      background: var(--overlay);
       backdrop-filter: blur(4px);
     }
 
@@ -1088,82 +1114,195 @@
       .stage { min-height: 0; }
     }
 
-    /* Webhook notification banner */
-    .wh-banner {
+    /* ---------- Sidebar extras ---------- */
+    .side-actions { display: grid; gap: 8px; margin: 20px 0 0; }
+
+    .side-toggle {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 13px 16px;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
       border: 1px solid var(--line);
       border-radius: 10px;
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.5;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: left;
       cursor: pointer;
-      transition: border-color .18s;
     }
-    .wh-banner:hover { border-color: var(--amber); }
-    .wh-banner-icon {
-      flex: 0 0 auto;
-      width: 32px;
-      height: 32px;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      background: rgba(255,173,10,.13);
-      color: var(--amber);
-    }
-    .wh-banner-icon svg { width: 17px; height: 17px; }
-    .wh-banner-title { font-weight: 800; }
-    .wh-banner-body { color: var(--muted); font-size: 13px; margin-top: 1px; }
-    .wh-banner-close {
-      margin-left: auto;
-      flex: 0 0 auto;
-      width: 28px; height: 28px;
-      display: grid; place-items: center;
-      border: 0; border-radius: 6px;
-      background: transparent; color: var(--muted);
-      cursor: pointer; font-size: 18px; line-height: 1;
-    }
-    .wh-banner-close:hover { background: var(--panel); color: var(--text); }
 
-    /* Webhook modal */
-    .wh-modal {
-      position: fixed; inset: 0; z-index: 10000;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,.85); backdrop-filter: blur(4px);
+    .side-toggle:hover { border-color: var(--green); color: var(--green); }
+    .side-toggle svg { width: 17px; height: 17px; flex: 0 0 auto; }
+    .side-toggle .label { margin-right: auto; }
+    :root[data-theme="light"] .side-toggle .moon,
+    .side-toggle .sun { display: none; }
+    :root[data-theme="light"] .side-toggle .sun { display: block; }
+
+    /* ---------- Sort control ---------- */
+    .tool-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
-    .wh-modal[hidden] { display: none; }
-    .wh-modal-content {
-      max-width: 520px; width: calc(100% - 40px);
-      padding: 32px;
-      border: 1px solid var(--line); border-radius: 16px;
-      background: var(--panel-2);
-      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+
+    .sort-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .06em;
     }
-    .wh-modal-title {
-      margin: 0 0 14px;
-      color: var(--amber);
-      font-size: 22px; font-weight: 800;
-    }
-    .wh-modal-body {
-      margin: 0 0 24px;
+
+    .sort-box svg { width: 15px; height: 15px; }
+
+    .sort-box select {
+      border: 0;
+      outline: 0;
+      background: transparent;
       color: var(--text);
-      font-size: 15px; line-height: 1.65;
-      white-space: pre-wrap;
+      font: inherit;
+      text-transform: none;
+      letter-spacing: normal;
+      cursor: pointer;
     }
-    .wh-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-    .wh-modal-btn {
-      padding: 11px 22px;
-      border: 1px solid var(--line); border-radius: 8px;
-      font: 700 14px/1 inherit;
-      cursor: pointer; transition: all .18s;
+
+    .sort-box select option { background: var(--panel); color: var(--text); }
+
+    /* ---------- Card extras ---------- */
+    .card-stat {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(4, 9, 18, .72);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .04em;
+      backdrop-filter: blur(6px);
+      pointer-events: none;
     }
-    .wh-modal-btn.primary { background: var(--amber); color: #000; border-color: var(--amber); }
-    .wh-modal-btn.primary:hover { background: #e09800; border-color: #e09800; }
-    .wh-modal-btn.secondary { background: transparent; color: var(--muted); }
-    .wh-modal-btn.secondary:hover { border-color: var(--line); background: var(--panel); color: var(--text); }
+
+    .card-stat[hidden] { display: none; }
+
+    /* Sits over the dark preview art, so its colors are fixed in both themes. */
+    .card-new {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #a9ff32;
+      color: #06140a;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      box-shadow: 0 2px 14px rgba(169, 255, 50, .5);
+      pointer-events: none;
+    }
+
+    .card-new[hidden] { display: none; }
+
+    .game-card:focus-within {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 50px color-mix(in srgb, var(--card-accent) 18%, transparent);
+    }
+
+    /* ---------- Focus visibility ---------- */
+    :where(button, select, input, a):focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 2px;
+    }
+
+    .preview:focus-visible { outline-offset: -3px; }
+
+    /* ---------- Loading state ---------- */
+    .stage.loading::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 38px;
+      height: 38px;
+      margin: -19px 0 0 -19px;
+      border: 3px solid rgba(255, 255, 255, .18);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stage.loading::after { animation-duration: 2.4s; }
+      .game-card { transition: none; }
+    }
+
+    /* ---------- New card art ---------- */
+    .game-card[data-id="game2048"] { --card-accent: #edc22e; }
+    .game-card[data-id="tetris"] { --card-accent: #00e5ff; }
+    .game-card[data-id="asteroids"] { --card-accent: #cbd5e1; }
+    .game-card[data-id="hextris"] { --card-accent: #4fc3f7; }
+    .game-card[data-id="astray"] { --card-accent: #7c5cff; }
+    .game-card[data-id="hexgl"] { --card-accent: #ff6b1a; }
+    .game-card[data-id="racer"] { --card-accent: #22c55e; }
+    .game-card[data-id="chess"] { --card-accent: #c8a165; }
+    .game-card[data-id="sudoku"] { --card-accent: #2ec5d3; }
+    .game-card[data-id="towerplatformer"] { --card-accent: #c080c0; }
+
+    .astray-art {
+      background:
+        repeating-linear-gradient(90deg, rgba(124, 92, 255, .55) 0 3px, transparent 3px 34px),
+        repeating-linear-gradient(0deg, rgba(124, 92, 255, .55) 0 3px, transparent 3px 34px),
+        radial-gradient(circle at 50% 55%, #1d1348, #07050f 72%);
+    }
+
+    .astray-art::before {
+      content: "";
+      position: absolute;
+      left: 21%;
+      top: 30%;
+      width: 9%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 30%, #fff, #b9a6ff 60%, #6d4bff);
+      box-shadow: 0 0 20px rgba(124, 92, 255, .95);
+    }
+
+    .astray-art::after {
+      content: "";
+      position: absolute;
+      right: 20%;
+      bottom: 24%;
+      width: 11%;
+      aspect-ratio: 1;
+      border: 3px solid #a9ff32;
+      border-radius: 4px;
+      background: rgba(169, 255, 50, .18);
+      box-shadow: 0 0 22px rgba(169, 255, 50, .7);
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .side-actions { margin: 0 0 0 8px; }
+      .side-toggle { width: auto; padding: 9px; }
+      .side-toggle .label { display: none; }
+    }
+
   </style>
 </head>
 <body>
@@ -1184,6 +1323,13 @@
           <span>Favorites</span>
         </button>
       </nav>
+      <div class="side-actions">
+        <button class="side-toggle" id="themeToggle" type="button" aria-pressed="false" title="Toggle light / dark theme">
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+          <span class="label">Theme</span>
+        </button>
+      </div>
       <div class="side-note"><span></span>Ready to play</div>
       <div class="playtime">Playtime<strong id="playtime">0 days · 0 hours · 0 minutes</strong></div>
     </aside>
@@ -1194,16 +1340,26 @@
           <h1 id="heading">Game Library</h1>
           <p class="subtitle" id="subtitle">Pick a game and jump in.</p>
         </div>
-        <div class="view-count" id="viewCount">30 games</div>
+        <div class="view-count" id="viewCount" aria-live="polite">42 games</div>
       </header>
 
       <section class="library-tools" id="gameTools" aria-label="Game filters">
-        <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+        <div class="tool-row">
           <label class="search-box" for="gameSearch" style="flex:1;min-width:200px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
             <input id="gameSearch" type="search" placeholder="Search games..." autocomplete="off">
           </label>
-          <div id="whBanner" hidden style="flex:1;min-width:220px;max-width:420px;"></div>
+          <span class="sort-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h13M3 12h9M3 18h5m9-9v10m0 0 3-3m-3 3-3-3"/></svg>
+            <label for="sortSelect">Sort</label>
+            <select id="sortSelect">
+              <option value="default">Featured</option>
+              <option value="new">New first</option>
+              <option value="az">A – Z</option>
+              <option value="recent">Recently played</option>
+              <option value="most">Most played</option>
+            </select>
+          </span>
         </div>
         <div class="categories" aria-label="Game categories">
           <button class="category-button active" data-category="all" type="button">All</button>
@@ -1211,6 +1367,8 @@
           <button class="category-button" data-category="action" type="button">Action</button>
           <button class="category-button" data-category="puzzle" type="button">Puzzle</button>
           <button class="category-button" data-category="strategy" type="button">Strategy</button>
+          <button class="category-button" data-category="board" type="button">Board</button>
+          <button class="category-button" data-category="racing" type="button">Racing</button>
           <button class="category-button" data-category="card" type="button">Card</button>
           <button class="category-button" data-category="idle" type="button">Idle</button>
           <button class="category-button" data-category="sandbox" type="button">Sandbox</button>
@@ -1557,35 +1715,128 @@
           </div>
         </article>
 
-        <article class="game-card" data-id="mp3" data-type="app">
+        <article class="game-card" data-id="game2048" data-type="game" data-category="puzzle" data-game-id="33">
+          <button class="preview image-art launch" style="--preview-image:url('Games/2048/2048-preview.png')" type="button" aria-label="Play 2048"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">2048</span><span class="card-detail">Join tiles to reach 2048</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite 2048"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play 2048"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="tetris" data-type="game" data-category="puzzle arcade" data-game-id="34">
+          <button class="preview image-art launch" style="--preview-image:url('Games/tetris/tetris-preview.png')" data-label="TETRIS" type="button" aria-label="Play Tetris"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Tetris</span><span class="card-detail">Stack blocks and clear lines</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Tetris"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Tetris"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="asteroids" data-type="game" data-category="arcade action" data-game-id="35">
+          <button class="preview image-art launch" style="--preview-image:url('Games/asteroids/asteroids-preview.png')" data-label="ASTEROIDS" type="button" aria-label="Play Asteroids"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Asteroids</span><span class="card-detail">Vector shooter classic</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Asteroids"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Asteroids"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="hextris" data-type="game" data-category="puzzle arcade" data-game-id="36">
+          <button class="preview image-art launch" style="--preview-image:url('Games/hextris/hextris-preview.png')" type="button" aria-label="Play Hextris"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Hextris</span><span class="card-detail">Spin the hexagon, match colors</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Hextris"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Hextris"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="astray" data-type="game" data-category="puzzle" data-game-id="37">
+          <button class="preview astray-art launch" type="button" aria-label="Play Astray"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Astray</span><span class="card-detail">3D marble maze runner</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Astray"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Astray"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="hexgl" data-type="game" data-category="racing action" data-game-id="38">
+          <button class="preview image-art launch" style="--preview-image:url('Games/hexgl/hexgl-preview.png')" type="button" aria-label="Play HexGL"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">HexGL</span><span class="card-detail">Futuristic WebGL racer</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite HexGL"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play HexGL"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="racer" data-type="game" data-category="racing arcade" data-game-id="39">
+          <button class="preview image-art launch" style="--preview-image:url('Games/racer/racer-preview.png')" data-label="RACER" type="button" aria-label="Play Outrun Racer"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Outrun Racer</span><span class="card-detail">Pseudo-3D road racing</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Outrun Racer"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Outrun Racer"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="chess" data-type="game" data-category="board strategy" data-game-id="40">
+          <button class="preview image-art launch" style="--preview-image:url('Games/chess/chess-preview.png')" data-label="CHESS" type="button" aria-label="Play Chess"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Chess</span><span class="card-detail">Play against the engine</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Chess"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Chess"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="sudoku" data-type="game" data-category="puzzle" data-game-id="41">
+          <button class="preview image-art launch" style="--preview-image:url('Games/sudoku/sudoku-preview.png')" type="button" aria-label="Play Sudoku"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Sudoku</span><span class="card-detail">Four difficulties and a timer</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Sudoku"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Sudoku"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="towerplatformer" data-type="game" data-category="arcade action" data-game-id="42">
+          <button class="preview image-art launch" style="--preview-image:url('Games/tower-platformer/tower-platformer-preview.png')" data-label="TOWER" type="button" aria-label="Play Tower Platformer"></button>
+          <div class="card-bar">
+            <div class="card-copy"><span class="card-title">Tower Platformer</span><span class="card-detail">Climb the rotating tower</span></div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Tower Platformer"></button>
+            <button class="icon-button play-button launch" type="button" aria-label="Play Tower Platformer"></button>
+          </div>
+        </article>
+
+        <article class="game-card" data-id="mp3" data-type="app" data-game-id="101">
           <button class="preview mp3-art launch" type="button" aria-label="Open MP3 Player"></button>
           <div class="card-bar">
             <div class="card-copy">
               <span class="card-title">MP3 Player</span>
               <span class="card-detail">Play local audio with visual modes</span>
             </div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite MP3 Player"></button>
             <button class="icon-button play-button launch" type="button" aria-label="Open MP3 Player"></button>
           </div>
         </article>
 
-        <article class="game-card" data-id="paint" data-type="app">
+        <article class="game-card" data-id="paint" data-type="app" data-game-id="102">
           <button class="preview image-art launch" style="--preview-image:url('Apps/paint/paint-preview.png')" data-label="PAINT" type="button" aria-label="Open Paint"></button>
           <div class="card-bar">
             <div class="card-copy">
               <span class="card-title">Paint</span>
               <span class="card-detail">Draw and sketch in-browser</span>
             </div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Paint"></button>
             <button class="icon-button play-button launch" type="button" aria-label="Open Paint"></button>
           </div>
         </article>
 
-        <article class="game-card" data-id="periodic" data-type="app">
+        <article class="game-card" data-id="periodic" data-type="app" data-game-id="103">
           <button class="preview image-art launch" style="--preview-image:url('Apps/periodic-speller/periodic-speller-preview.png')" data-label="PERIODIC" type="button" aria-label="Open Periodic Speller"></button>
           <div class="card-bar">
             <div class="card-copy">
               <span class="card-title">Periodic Speller</span>
               <span class="card-detail">Spell words with element symbols</span>
             </div>
+            <button class="icon-button favorite" type="button" aria-label="Favorite Periodic Speller"></button>
             <button class="icon-button play-button launch" type="button" aria-label="Open Periodic Speller"></button>
           </div>
         </article>
@@ -1672,47 +1923,124 @@
       typingtest: { id: 28, type: "game", title: "Typing Test", src: "Games/typing-game/index.html" },
       crossyroad: { id: 29, type: "game", title: "Crossy Road", src: "Games/crossy-road-master/index.html" },
       holeio: { id: 30, type: "game", title: "Hole.io", src: "Games/holeio/index.html" },
-      pvz: { id: 32, type: "game", title: "Plants vs Zombies", src: "Games/plantsvszombies/index.html" }
+      pvz: { id: 32, type: "game", title: "Plants vs Zombies", src: "Games/plantsvszombies/index.html" },
+      game2048: { id: 33, type: "game", title: "2048", src: "Games/2048/index.html", isNew: true },
+      tetris: { id: 34, type: "game", title: "Tetris", src: "Games/tetris/index.html", isNew: true },
+      asteroids: { id: 35, type: "game", title: "Asteroids", src: "Games/asteroids/index.html", isNew: true },
+      hextris: { id: 36, type: "game", title: "Hextris", src: "Games/hextris/index.html", isNew: true },
+      astray: { id: 37, type: "game", title: "Astray", src: "Games/astray/index.html", isNew: true },
+      hexgl: { id: 38, type: "game", title: "HexGL", src: "Games/hexgl/index.html", isNew: true },
+      racer: { id: 39, type: "game", title: "Outrun Racer", src: "Games/racer/v4.final.html", isNew: true },
+      chess: { id: 40, type: "game", title: "Chess", src: "Games/chess/index.html", isNew: true },
+      sudoku: { id: 41, type: "game", title: "Sudoku", src: "Games/sudoku/index.html", isNew: true },
+      towerplatformer: { id: 42, type: "game", title: "Tower Platformer", src: "Games/tower-platformer/index.html", isNew: true }
     };
     const apps = {
-      mp3: { type: "app", title: "MP3 Player", src: "Apps/Mp3Player/index.html" },
-      paint: { type: "app", title: "Paint", src: "Apps/paint/index.html" },
-      periodic: { type: "app", title: "Periodic Speller", src: "Apps/periodic-speller/index.html" }
+      mp3: { id: 101, type: "app", title: "MP3 Player", src: "Apps/Mp3Player/index.html" },
+      paint: { id: 102, type: "app", title: "Paint", src: "Apps/paint/index.html" },
+      periodic: { id: 103, type: "app", title: "Periodic Speller", src: "Apps/periodic-speller/index.html" }
     };
     const libraryItems = { ...games, ...apps };
+    // id -> key lookup, built once (updateView used to re-scan the registry per card per keystroke)
+    const keyById = new Map(Object.entries(libraryItems).map(([key, item]) => [String(item.id), key]));
+
     const star = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg>';
     const play = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m8 5 11 7-11 7V5Z"/></svg>';
-    const favoriteCookie = document.cookie.split("; ").find(cookie => cookie.startsWith("favorites="));
-    const favorites = new Set((favoriteCookie ? favoriteCookie.slice("favorites=".length) : "").split(",").filter(id => /^\d+$/.test(id)));
-    const timeCookie = document.cookie.split("; ").find(cookie => cookie.startsWith("time="));
-    const savedTime = (timeCookie ? timeCookie.slice("time=".length) : "0,0,0").split(",").map(Number);
-    let savedPlayMinutes = Math.max(0, (savedTime[0] || 0) * 1440 + (savedTime[1] || 0) * 60 + (savedTime[2] || 0));
+
+    /* ---------- Persistence ----------
+       Favorites and playtime used to live in cookies, which do not persist on
+       file:// and are capped at ~4KB. Everything now lives in localStorage, with
+       a one-time read of the old cookies so existing visitors keep their data. */
+    const STORE_KEY = "miniplay.v1";
+
+    function legacyCookie(name) {
+      const hit = document.cookie.split("; ").find(entry => entry.startsWith(name + "="));
+      return hit ? hit.slice(name.length + 1) : "";
+    }
+
+    function loadState() {
+      let saved = null;
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (raw) saved = JSON.parse(raw);
+      } catch (err) {
+        saved = null;
+      }
+      if (!saved || typeof saved !== "object") saved = {};
+      if (!Array.isArray(saved.favorites)) {
+        saved.favorites = legacyCookie("favorites").split(",").filter(id => /^\d+$/.test(id));
+      }
+      if (typeof saved.minutes !== "number" || !isFinite(saved.minutes) || saved.minutes < 0) {
+        const parts = (legacyCookie("time") || "0,0,0").split(",").map(Number);
+        saved.minutes = Math.max(0, (parts[0] || 0) * 1440 + (parts[1] || 0) * 60 + (parts[2] || 0));
+      }
+      if (!saved.stats || typeof saved.stats !== "object") saved.stats = {};
+      return saved;
+    }
+
+    const state = loadState();
+
+    function persist() {
+      state.favorites = [...favorites].sort((a, b) => Number(a) - Number(b));
+      state.minutes = currentPlayMinutes();
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      } catch (err) {
+        /* storage full or blocked - keep running in memory */
+      }
+    }
+
+    const favorites = new Set(state.favorites.map(String));
+    let savedPlayMinutes = state.minutes;
     let playSessionStartedAt = null;
+
     const cards = [...document.querySelectorAll(".game-card")];
     const player = document.querySelector("#player");
     const stage = document.querySelector("#stage");
     const playerTitle = document.querySelector("#playerTitle");
     const gameTools = document.querySelector("#gameTools");
     const gameSearch = document.querySelector("#gameSearch");
+    const categoryRow = document.querySelector(".categories");
+    const sortSelect = document.querySelector("#sortSelect");
+    const themeToggle = document.querySelector("#themeToggle");
     const debugPanel = document.querySelector("#debugPanel");
     const debugText = document.querySelector("#debugText");
     const categoryButtons = [...document.querySelectorAll(".category-button")];
+    const betaIds = new Set(Object.keys(libraryItems).filter(key => libraryItems[key].beta === true));
+
     let currentGame = null;
     let activeView = "games";
     let activeCategory = "all";
     let searchTerm = "";
+    let sortMode = "default";
     let debugBuffer = "";
     let betaMode = false;
-    let betaModalPending = false;
+    let pendingBetaId = null;
 
     document.querySelectorAll(".favorite").forEach(button => button.innerHTML = star);
     document.querySelectorAll(".play-button").forEach(button => button.innerHTML = play);
 
-    function saveFavorites() {
-      const value = [...favorites].sort((a, b) => Number(a) - Number(b)).join(",");
-      document.cookie = `favorites=${value}; path=/; max-age=31536000; SameSite=Lax`;
+    /* ---------- Theme ---------- */
+    function applyTheme(theme) {
+      const light = theme === "light";
+      if (light) document.documentElement.setAttribute("data-theme", "light");
+      else document.documentElement.removeAttribute("data-theme");
+      themeToggle.setAttribute("aria-pressed", light ? "true" : "false");
+      themeToggle.querySelector(".label").textContent = light ? "Light" : "Dark";
     }
 
+    if (state.theme !== "light" && state.theme !== "dark") {
+      state.theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    }
+    applyTheme(state.theme);
+
+    themeToggle.addEventListener("click", () => {
+      state.theme = state.theme === "light" ? "dark" : "light";
+      applyTheme(state.theme);
+      persist();
+    });
+
+    /* ---------- Playtime ---------- */
     function currentPlayMinutes() {
       const sessionMinutes = playSessionStartedAt === null ? 0 : Math.floor((Date.now() - playSessionStartedAt) / 60000);
       return savedPlayMinutes + sessionMinutes;
@@ -1727,8 +2055,8 @@
 
     function savePlaytime() {
       const time = formatPlaytime(currentPlayMinutes());
-      document.cookie = `time=${time.days},${time.hours},${time.minutes}; path=/; max-age=31536000; SameSite=Lax`;
       document.querySelector("#playtime").textContent = `${time.days} days · ${time.hours} hours · ${time.minutes} minutes`;
+      persist();
     }
 
     function startPlaytime() {
@@ -1743,6 +2071,50 @@
       savePlaytime();
     }
 
+    /* ---------- Per-item stats ---------- */
+    function statFor(id) {
+      const entry = state.stats[id];
+      return entry && typeof entry === "object" ? entry : { plays: 0, last: 0 };
+    }
+
+    function recordPlay(id) {
+      const entry = statFor(id);
+      state.stats[id] = { plays: (entry.plays || 0) + 1, last: Date.now() };
+      persist();
+      updateStatBadges();
+    }
+
+    function updateStatBadges() {
+      cards.forEach(card => {
+        let badge = card.querySelector(".card-stat");
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "card-stat";
+          card.prepend(badge);
+        }
+        const plays = statFor(card.dataset.id).plays || 0;
+        badge.hidden = plays === 0;
+        badge.textContent = plays === 1 ? "1 play" : `${plays} plays`;
+      });
+    }
+
+    // Driven off the registry's isNew flag so the badge and the "New first"
+    // sort can never disagree about which games are new.
+    function isNewItem(card) {
+      return libraryItems[card.dataset.id]?.isNew === true;
+    }
+
+    function addNewBadges() {
+      cards.filter(isNewItem).forEach(card => {
+        if (card.querySelector(".card-new")) return;
+        const badge = document.createElement("span");
+        badge.className = "card-new";
+        badge.textContent = "NEW";
+        card.prepend(badge);
+      });
+    }
+
+    /* ---------- Debug engine ---------- */
     function getStorageStatus(storage) {
       try {
         const key = "__debug_test__";
@@ -1754,6 +2126,33 @@
       }
     }
 
+    // Cards are hand-written while the registry is data, so the two can drift.
+    // Surface any mismatch instead of letting a card silently do nothing.
+    function registryProblems() {
+      const problems = [];
+      const seen = new Set();
+      cards.forEach(card => {
+        const id = card.dataset.id;
+        const item = libraryItems[id];
+        if (!item) {
+          problems.push(`card "${id}" has no registry entry`);
+          return;
+        }
+        if (seen.has(id)) problems.push(`duplicate card for "${id}"`);
+        seen.add(id);
+        if (card.dataset.gameId && String(item.id) !== card.dataset.gameId) {
+          problems.push(`"${id}" card id ${card.dataset.gameId} != registry id ${item.id}`);
+        }
+        if (!card.dataset.gameId) problems.push(`"${id}" card is missing data-game-id`);
+      });
+      Object.keys(libraryItems).forEach(key => {
+        if (!seen.has(key)) problems.push(`registry entry "${key}" has no card`);
+      });
+      const ids = Object.values(libraryItems).map(item => item.id);
+      if (new Set(ids).size !== ids.length) problems.push("registry contains duplicate numeric ids");
+      return problems;
+    }
+
     function buildDebugText() {
       const gameCards = cards.filter(card => card.dataset.type === "game");
       const appCards = cards.filter(card => card.dataset.type === "app");
@@ -1762,6 +2161,12 @@
       const nav = navigator;
       const screenInfo = window.screen;
       const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+      const problems = registryProblems();
+      const played = Object.entries(state.stats)
+        .filter(([, entry]) => entry && entry.plays)
+        .sort((a, b) => b[1].plays - a[1].plays)
+        .slice(0, 8)
+        .map(([id, entry]) => `${libraryItems[id] ? libraryItems[id].title : id} x${entry.plays}`);
       return [
         "DEBUG ENGINE",
         "",
@@ -1777,12 +2182,18 @@
         "Library",
         `Games: ${Object.keys(games).length}`,
         `Apps: ${Object.keys(apps).length}`,
-        `Cards: ${cards.length}`,
+        `Cards: ${cards.length} (${gameCards.length} game, ${appCards.length} app)`,
         `Favorites saved: ${favorites.size}`,
         `Categories: ${categories.join(", ") || "(none)"}`,
         `Current view: ${activeView}`,
         `Current item: ${currentGame || "(none)"}`,
+        `Sort: ${sortMode}`,
+        `Theme: ${state.theme}`,
         `Playtime: ${time.days} days, ${time.hours} hours, ${time.minutes} minutes`,
+        `Most played: ${played.join(", ") || "(none yet)"}`,
+        "",
+        "Integrity",
+        problems.length ? problems.map(line => `FAIL ${line}`).join("\n") : "OK cards and registry agree",
         "",
         "Device",
         `User agent: ${nav.userAgent}`,
@@ -1816,223 +2227,255 @@
       stopPlaytime();
       player.hidden = true;
       stage.replaceChildren();
+      stage.classList.remove("loading");
       currentGame = null;
       document.body.style.overflow = "";
       activeView = "debug";
       debugText.textContent = buildDebugText();
       updateView();
-      history.replaceState(null, "", "#debug");
+      setHash("debug");
+    }
+
+    /* ---------- View ---------- */
+    function cardTitle(card) {
+      return card.querySelector(".card-title")?.textContent.trim() || "";
+    }
+
+    function applySort() {
+      const ordered = [...cards];
+      if (sortMode === "az") {
+        ordered.sort((a, b) => cardTitle(a).localeCompare(cardTitle(b)));
+      } else if (sortMode === "recent") {
+        ordered.sort((a, b) => (statFor(b.dataset.id).last || 0) - (statFor(a.dataset.id).last || 0)
+          || cardTitle(a).localeCompare(cardTitle(b)));
+      } else if (sortMode === "most") {
+        ordered.sort((a, b) => (statFor(b.dataset.id).plays || 0) - (statFor(a.dataset.id).plays || 0)
+          || cardTitle(a).localeCompare(cardTitle(b)));
+      } else if (sortMode === "new") {
+        // Array#sort is stable, so everything else keeps its featured order.
+        ordered.sort((a, b) => (isNewItem(b) ? 1 : 0) - (isNewItem(a) ? 1 : 0));
+      }
+      ordered.forEach((card, index) => {
+        card.style.order = sortMode === "default" ? "" : String(index);
+      });
     }
 
     function updateView() {
       let visible = 0;
       cards.forEach(card => {
-        const isFavorite = card.dataset.gameId && favorites.has(card.dataset.gameId);
+        const gameId = card.dataset.gameId;
+        const isFavorite = Boolean(gameId) && favorites.has(gameId);
         const type = card.dataset.type || "game";
-        const title = card.querySelector(".card-title")?.textContent.toLowerCase() || "";
+        const title = cardTitle(card).toLowerCase();
         const detail = card.querySelector(".card-detail")?.textContent.toLowerCase() || "";
         const categories = (card.dataset.category || "").split(/\s+/).filter(Boolean);
         const matchesSearch = !searchTerm || title.includes(searchTerm) || detail.includes(searchTerm);
         const matchesCategory = activeCategory === "all" || categories.includes(activeCategory);
-        
-        // Beta mode: only show beta games
-        const gameKey = card.dataset.gameId ? Object.keys(libraryItems).find(k => libraryItems[k].id === Number(card.dataset.gameId)) : null;
-        const isBetaGame = gameKey && libraryItems[gameKey]?.beta === true;
-        const showInBetaMode = betaMode ? isBetaGame : !isBetaGame;
-        
+        const isBetaItem = betaIds.has(card.dataset.id);
+        // Beta items are only ever visible in beta mode - including inside Favorites,
+        // which previously leaked them back into the normal library.
+        const matchesMode = betaMode ? isBetaItem : !isBetaItem;
+
         const show =
-          activeView === "games" ? type === "game" && matchesSearch && matchesCategory && showInBetaMode :
-          activeView === "apps" ? type === "app" :
           activeView === "debug" ? false :
-          isFavorite;
+          activeView === "games" ? type === "game" && matchesSearch && matchesCategory && matchesMode :
+          activeView === "apps" ? type === "app" && matchesSearch :
+          isFavorite && matchesSearch && matchesMode;
+
         card.hidden = !show;
         const favoriteButton = card.querySelector(".favorite");
-        if (favoriteButton) favoriteButton.classList.toggle("on", isFavorite);
+        if (favoriteButton) {
+          favoriteButton.classList.toggle("on", isFavorite);
+          favoriteButton.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+        }
         if (show) visible++;
       });
+
       const copy = {
         games: betaMode ? ["Beta Testing", "Experimental games and features.", "game"] : ["Game Library", "Pick a game and jump in.", "game"],
         apps: ["App Library", "Useful apps for the mini browser.", "app"],
-        favorites: ["Favorites", "Your saved games, ready to launch.", "game"],
+        favorites: ["Favorites", "Your saved games and apps, ready to launch.", "item"],
         debug: ["Debug Engine", "Device and site stats.", "line"]
       }[activeView];
+
       document.querySelector("#heading").textContent = copy[0];
       document.querySelector("#subtitle").textContent = copy[1];
-      document.querySelector("#viewCount").textContent = activeView === "debug" ? "debug123" : betaMode && activeView === "games" ? "BETATEST" : `${visible} ${copy[2]}${visible === 1 ? "" : "s"}`;
-      gameTools.hidden = activeView !== "games";
-      document.querySelector("#empty").textContent = activeView === "games" ? "No games match that search or category." : "No favorites yet. Use the star on a game to add one.";
-      document.querySelector("#empty").classList.toggle("show", (activeView === "favorites" || activeView === "games") && visible === 0);
+      document.querySelector("#viewCount").textContent =
+        activeView === "debug" ? "debug123" :
+        betaMode && activeView === "games" ? "BETATEST" :
+        `${visible} ${copy[2]}${visible === 1 ? "" : "s"}`;
+
+      gameTools.hidden = activeView === "debug";
+      categoryRow.hidden = activeView !== "games";
+      gameSearch.placeholder =
+        activeView === "apps" ? "Search apps..." :
+        activeView === "favorites" ? "Search favorites..." : "Search games...";
+
+      const empty = document.querySelector("#empty");
+      empty.textContent =
+        activeView === "favorites"
+          ? (searchTerm ? "No favorites match that search." : "No favorites yet. Use the star on a game to add one.")
+          : activeView === "apps" ? "No apps match that search." : "No games match that search or category.";
+      empty.classList.toggle("show", activeView !== "debug" && visible === 0);
+
       debugPanel.classList.toggle("show", activeView === "debug");
       document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.view === activeView));
       categoryButtons.forEach(button => button.classList.toggle("active", button.dataset.category === activeCategory));
+      applySort();
     }
 
-    // Player display state: can be 'fullscreen' (browser fullscreen) or 'windowed' (floating window)
-    let playerMode = 'fullscreen';
+    /* ---------- Hash / deep links ---------- */
+    let ignoreHashChange = false;
+
+    function setHash(value) {
+      ignoreHashChange = true;
+      const target = value ? `#${value}` : location.pathname + location.search;
+      history.replaceState(null, "", target);
+      // let the hashchange event (if any) fire before re-arming
+      setTimeout(() => { ignoreHashChange = false; }, 0);
+    }
+
+    /* ---------- Player ---------- */
+    let playerMode = "fullscreen";
 
     function setPlayerWindowed() {
-      playerMode = 'windowed';
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-      player.classList.add('windowed');
-      player.style.left = '50%';
-      player.style.top = '50%';
-      player.style.transform = 'translate(-50%, -50%)';
-      
-      // Adjust size to iframe content if available
-      const frame = stage.querySelector('iframe');
+      playerMode = "windowed";
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      player.classList.add("windowed");
+      player.style.left = "50%";
+      player.style.top = "50%";
+      player.style.transform = "translate(-50%, -50%)";
+      const frame = stage.querySelector("iframe");
       if (frame) adjustPlayerToIframe(frame);
-      
-      // Update button states
-      windowButton.classList.add('on');
-      windowButton.querySelector('span').textContent = 'Fullscreen';
+      windowButton.classList.add("on");
+      windowButton.querySelector("span").textContent = "Fullscreen";
     }
 
     function setPlayerFullscreen() {
-      playerMode = 'fullscreen';
-      player.classList.remove('windowed');
-      player.style.left = '';
-      player.style.top = '';
-      player.style.transform = '';
-      player.style.width = '';
-      player.style.height = '';
-      
-      // Update button states
-      windowButton.classList.remove('on');
-      windowButton.querySelector('span').textContent = 'Window';
+      playerMode = "fullscreen";
+      player.classList.remove("windowed");
+      player.style.left = "";
+      player.style.top = "";
+      player.style.transform = "";
+      player.style.width = "";
+      player.style.height = "";
+      windowButton.classList.remove("on");
+      windowButton.querySelector("span").textContent = "Window";
     }
 
     function closePlayer() {
       stopPlaytime();
       player.hidden = true;
       stage.replaceChildren();
+      stage.classList.remove("loading");
       currentGame = null;
-      document.body.style.overflow = '';
-      
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-      
+      document.body.style.overflow = "";
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       setPlayerFullscreen();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // A deep link left the item in the URL; clear it so reload returns to the library.
+      if (location.hash && location.hash !== "#debug" && location.hash !== "#beta") setHash("");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function launch(id, requestBrowserFullscreen = false) {
-      currentGame = id;
       const item = libraryItems[id];
       if (!item) return;
-      
-      // Check if this is a beta game and show modal first
-      if (item.beta === true && !betaModalPending) {
-        betaModalPending = true;
+
+      if (item.beta === true && pendingBetaId !== id) {
+        pendingBetaId = id;
         const betaModal = document.querySelector("#betaModal");
-        const betaGameTitle = document.querySelector("#betaGameTitle");
-        const betaWarningsList = document.querySelector("#betaWarningsList");
-        
-        betaGameTitle.textContent = item.title;
-        betaWarningsList.innerHTML = "";
-        
-        const warnings = item.betaWarnings || ["This game is experimental and may have issues"];
-        warnings.forEach(warning => {
+        document.querySelector("#betaGameTitle").textContent = item.title;
+        const list = document.querySelector("#betaWarningsList");
+        list.replaceChildren();
+        (item.betaWarnings || ["This game is experimental and may have issues"]).forEach(warning => {
           const li = document.createElement("li");
           li.textContent = warning;
-          betaWarningsList.appendChild(li);
+          list.appendChild(li);
         });
-        
         betaModal.hidden = false;
-        return; // Don't launch yet, wait for modal confirmation
+        document.querySelector("#betaConfirm").focus();
+        return;
       }
-      
-      // Reset beta modal pending flag
-      betaModalPending = false;
-      
+      pendingBetaId = null;
+      currentGame = id;
+
       if (item.type === "game") startPlaytime();
       else stopPlaytime();
-      
+      recordPlay(id);
+
       playerTitle.textContent = item.title;
       stage.replaceChildren();
-      
-      // Start in windowed mode by default
       setPlayerWindowed();
-      
+
       if (["slope", "baldisbasics", "subwaysurfers", "holeio"].includes(id) && location.protocol === "file:") {
+        stage.classList.remove("loading");
         stage.innerHTML = `<div class="server-message"><div><h2>${item.title} needs a local server</h2><p>Browsers block Unity build files when this page is opened directly from disk. Run this command in the website folder, then open <strong>http://localhost:8000</strong>.</p><code>python3 -m http.server 8000</code></div></div>`;
         player.hidden = false;
         document.body.style.overflow = "hidden";
         return;
       }
-      
+
       const frame = document.createElement("iframe");
       frame.src = item.src;
       frame.title = item.title;
       frame.setAttribute("allowfullscreen", "");
-      frame.setAttribute("allow", "fullscreen");
-      stage.append(frame);
-      
-      // Adjust player size to iframe content when available
-      frame.addEventListener('load', () => {
-        if (playerMode === 'windowed') {
-          adjustPlayerToIframe(frame);
-        }
+      frame.setAttribute("allow", "fullscreen; autoplay; gamepad; clipboard-write");
+      stage.classList.add("loading");
+      frame.addEventListener("load", () => {
+        stage.classList.remove("loading");
+        if (playerMode === "windowed") adjustPlayerToIframe(frame);
       });
-      
+      frame.addEventListener("error", () => stage.classList.remove("loading"));
+      stage.append(frame);
+
       player.hidden = false;
       document.body.style.overflow = "hidden";
-      
+      document.querySelector("#backButton").focus();
+
       if (requestBrowserFullscreen && player.requestFullscreen) {
         player.requestFullscreen().catch(() => {});
       }
     }
 
     function adjustPlayerToIframe(frame) {
-      if (playerMode !== 'windowed') return;
-      
+      if (playerMode !== "windowed") return;
       try {
         const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
         if (!doc) return;
-        
         const body = doc.body || {};
         const html = doc.documentElement || {};
         const contentW = Math.max(html.scrollWidth || 0, body.scrollWidth || 0, html.clientWidth || 0);
         const contentH = Math.max(html.scrollHeight || 0, body.scrollHeight || 0, html.clientHeight || 0);
-        
-        const paddingW = 40;
-        const paddingH = 80;
         const maxW = Math.min(1100, window.innerWidth - 32);
         const maxH = Math.min(window.innerHeight * 0.9, 820);
-        const minW = 360;
-        const minH = 240;
-        
-        const targetW = Math.round(Math.min(maxW, Math.max(minW, contentW + paddingW)));
-        const targetH = Math.round(Math.min(maxH, Math.max(minH, contentH + paddingH)));
-        
-        player.style.width = targetW + 'px';
-        player.style.height = targetH + 'px';
-        
-        if (frame.contentWindow) {
-          frame.contentWindow.dispatchEvent(new Event('resize'));
-        }
+        const targetW = Math.round(Math.min(maxW, Math.max(360, contentW + 40)));
+        const targetH = Math.round(Math.min(maxH, Math.max(240, contentH + 80)));
+        player.style.width = targetW + "px";
+        player.style.height = targetH + "px";
+        if (frame.contentWindow) frame.contentWindow.dispatchEvent(new Event("resize"));
       } catch (err) {
-        // Cross-origin access error - silently ignore
+        /* cross-origin frame - leave the default window size */
       }
     }
 
+    /* ---------- Wiring ---------- */
     cards.forEach(card => {
       card.querySelectorAll(".launch").forEach(button => button.addEventListener("click", () => launch(card.dataset.id, false)));
       const favoriteButton = card.querySelector(".favorite");
       if (!favoriteButton) return;
       favoriteButton.addEventListener("click", () => {
         const gameId = card.dataset.gameId;
-        favorites.has(gameId) ? favorites.delete(gameId) : favorites.add(gameId);
-        saveFavorites();
+        if (!gameId) return;
+        if (favorites.has(gameId)) favorites.delete(gameId);
+        else favorites.add(gameId);
+        persist();
         updateView();
       });
     });
 
     document.querySelectorAll(".nav-button").forEach(button => button.addEventListener("click", () => {
       activeView = button.dataset.view;
-      if (location.hash === "#debug") history.replaceState(null, "", location.pathname + location.search);
+      if (location.hash === "#debug") setHash("");
       updateView();
     }));
 
@@ -2041,14 +2484,79 @@
       updateView();
     });
 
+    sortSelect.addEventListener("change", () => {
+      sortMode = sortSelect.value;
+      updateView();
+    });
+
     categoryButtons.forEach(button => button.addEventListener("click", () => {
       activeCategory = button.dataset.category;
       updateView();
     }));
 
+    /* ---------- Keyboard ---------- */
+    function visiblePreviews() {
+      return cards.filter(card => !card.hidden)
+        .sort((a, b) => (Number(a.style.order) || 0) - (Number(b.style.order) || 0))
+        .map(card => card.querySelector(".preview"))
+        .filter(Boolean);
+    }
+
+    function moveFocus(current, delta) {
+      const list = visiblePreviews();
+      const index = list.indexOf(current);
+      if (index === -1) return false;
+      const next = list[Math.min(list.length - 1, Math.max(0, index + delta))];
+      if (next && next !== current) next.focus();
+      return true;
+    }
+
+    function columnCount(list) {
+      if (list.length < 2) return 1;
+      const top = list[0].getBoundingClientRect().top;
+      let count = 0;
+      for (const element of list) {
+        if (Math.abs(element.getBoundingClientRect().top - top) > 4) break;
+        count++;
+      }
+      return Math.max(1, count);
+    }
+
     window.addEventListener("keydown", event => {
       const target = event.target;
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable) return;
+      const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+        || target instanceof HTMLSelectElement || target?.isContentEditable;
+
+      if (event.key === "Escape") {
+        const betaModal = document.querySelector("#betaModal");
+        if (!betaModal.hidden) {
+          betaModal.hidden = true;
+          pendingBetaId = null;
+          return;
+        }
+        if (!player.hidden) {
+          closePlayer();
+          return;
+        }
+      }
+
+      if (!typing && event.key === "/" && player.hidden) {
+        event.preventDefault();
+        gameSearch.focus();
+        gameSearch.select();
+        return;
+      }
+
+      if (!typing && target?.classList?.contains("preview") && event.key.startsWith("Arrow")) {
+        const list = visiblePreviews();
+        const columns = columnCount(list);
+        const delta = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1
+          : event.key === "ArrowDown" ? columns : -columns;
+        if (moveFocus(target, delta)) event.preventDefault();
+        return;
+      }
+
+      if (typing) return;
       if (event.key.length !== 1) return;
       debugBuffer = (debugBuffer + event.key.toLowerCase()).slice(-8);
       if (debugBuffer === "debug123") {
@@ -2057,168 +2565,78 @@
       }
       if (debugBuffer === "betatest") {
         debugBuffer = "";
-        if (!betaMode) {
-          betaMode = true;
-          stopPlaytime();
-          player.hidden = true;
-          stage.replaceChildren();
-          currentGame = null;
-          document.body.style.overflow = "";
-          activeView = "games";
-          activeCategory = "all";
-          searchTerm = "";
-          gameSearch.value = "";
-          updateView();
-          history.replaceState(null, "", "#beta");
-        } else {
-          betaMode = false;
-          activeView = "games";
-          updateView();
-          history.replaceState(null, "", "#");
-        }
+        setBetaMode(!betaMode);
       }
     });
+
+    function setBetaMode(on) {
+      betaMode = on;
+      stopPlaytime();
+      player.hidden = true;
+      stage.replaceChildren();
+      stage.classList.remove("loading");
+      currentGame = null;
+      document.body.style.overflow = "";
+      activeView = "games";
+      if (on) {
+        activeCategory = "all";
+        searchTerm = "";
+        gameSearch.value = "";
+      }
+      updateView();
+      setHash(on ? "beta" : "");
+    }
 
     document.querySelector("#backButton").addEventListener("click", closePlayer);
 
     document.querySelector("#reloadButton").addEventListener("click", () => {
       const frame = stage.querySelector("iframe");
-      if (frame && libraryItems[currentGame]) frame.src = libraryItems[currentGame].src;
+      const item = libraryItems[currentGame];
+      if (!frame || !item) return;
+      // Re-assigning the identical src is a no-op in some browsers; bounce via about:blank.
+      stage.classList.add("loading");
+      frame.src = "about:blank";
+      requestAnimationFrame(() => { frame.src = item.src; });
     });
 
     const windowButton = document.querySelector("#windowButton");
-
-    // Window button: toggles between windowed mode and fullscreen mode
     if (windowButton) {
-      windowButton.addEventListener('click', () => {
-        if (playerMode === 'windowed') {
-          setPlayerFullscreen();
-        } else {
-          setPlayerWindowed();
-        }
+      windowButton.addEventListener("click", () => {
+        if (playerMode === "windowed") setPlayerFullscreen();
+        else setPlayerWindowed();
       });
     }
 
-    // Beta modal event listeners
     document.querySelector("#betaCancel").addEventListener("click", () => {
       document.querySelector("#betaModal").hidden = true;
-      betaModalPending = false;
-      currentGame = null; // Reset since we're not launching
+      pendingBetaId = null;
     });
 
     document.querySelector("#betaConfirm").addEventListener("click", () => {
       document.querySelector("#betaModal").hidden = true;
-      // Launch the game that was pending
-      if (currentGame) {
-        launch(currentGame);
-      }
+      if (pendingBetaId) launch(pendingBetaId);
     });
 
-    setInterval(savePlaytime, 30000);
+    /* ---------- Boot ---------- */
+    function openFromHash() {
+      const target = location.hash.slice(1);
+      if (target === "debug") { openDebugEngine(); return; }
+      if (target === "beta") { if (!betaMode) setBetaMode(true); return; }
+      if (libraryItems[target]) launch(target);
+    }
+
+    window.addEventListener("hashchange", () => {
+      if (ignoreHashChange) return;
+      openFromHash();
+    });
+
+    setInterval(() => { if (playSessionStartedAt !== null) savePlaytime(); }, 30000);
     window.addEventListener("pagehide", stopPlaytime);
     savePlaytime();
+    updateStatBadges();
+    addNewBadges();
     updateView();
-    const linkedItem = location.hash.slice(1);
-    if (linkedItem === "debug") openDebugEngine();
-    else if (libraryItems[linkedItem]) launch(linkedItem);
-  </script>
-
-  <!-- Webhook modal -->
-  <div class="wh-modal" id="whModal" hidden>
-    <div class="wh-modal-content">
-      <div class="wh-modal-title" id="whModalTitle"></div>
-      <div class="wh-modal-body" id="whModalBody"></div>
-      <div class="wh-modal-actions" id="whModalActions"></div>
-    </div>
-  </div>
-
-  <script>
-  (function(){
-    const WEBHOOK = "https://webhook.site/814d0fc6-5bc2-4c82-b156-bc37d89f658c";
-    const POLL_MS = 15000000000000000000000000000000000000000000000;
-    let lastSeen = null;
-
-    const bannerWrap = document.getElementById("whBanner");
-    const modal     = document.getElementById("whModal");
-    const modalTitle   = document.getElementById("whModalTitle");
-    const modalBody    = document.getElementById("whModalBody");
-    const modalActions = document.getElementById("whModalActions");
-
-    function showModal(data) {
-      modalTitle.textContent = data.title || "";
-      modalBody.textContent  = data.text  || "";
-      modalActions.innerHTML = "";
-      (data.buttons || []).forEach((btn, i) => {
-        const b = document.createElement("button");
-        b.className = "wh-modal-btn " + (i === 0 ? "primary" : "secondary");
-        b.textContent = btn.label || btn;
-        b.onclick = () => {
-          if (btn.url) window.open(btn.url, "_blank");
-          modal.hidden = true;
-        };
-        modalActions.appendChild(b);
-      });
-      // Always add a dismiss button if no buttons provided
-      if (!data.buttons || data.buttons.length === 0) {
-        const b = document.createElement("button");
-        b.className = "wh-modal-btn secondary";
-        b.textContent = "Dismiss";
-        b.onclick = () => { modal.hidden = true; };
-        modalActions.appendChild(b);
-      }
-      modal.hidden = false;
-    }
-
-    function showBanner(data) {
-      bannerWrap.innerHTML = "";
-      const el = document.createElement("div");
-      el.className = "wh-banner";
-      el.innerHTML = `
-        <div class="wh-banner-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </div>
-        <div>
-          <div class="wh-banner-title">${escHtml(data.title || "Notification")}</div>
-          <div class="wh-banner-body">${escHtml(data.text || "")}</div>
-        </div>
-        <button class="wh-banner-close" aria-label="Dismiss">&times;</button>
-      `;
-      el.querySelector(".wh-banner-close").onclick = e => {
-        e.stopPropagation();
-        bannerWrap.hidden = true;
-      };
-      bannerWrap.appendChild(el);
-      bannerWrap.hidden = false;
-    }
-
-    function escHtml(s) {
-      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    }
-
-    async function poll() {
-      try {
-        const res = await fetch(WEBHOOK, { cache: "no-store" });
-        if (!res.ok) return;
-        const text = await res.text();
-        if (!text.trim()) return;
-        if (text === lastSeen) return;
-        lastSeen = text;
-        let data;
-        try { data = JSON.parse(text); } catch { return; }
-        if (data.buttons && data.buttons.length > 0) {
-          showModal(data);
-        } else {
-          showBanner(data);
-        }
-      } catch {}
-    }
-
-    poll();
-    setInterval(poll, POLL_MS);
-  })();
+    openFromHash();
   </script>
 
   <script>
@@ -2232,8 +2650,17 @@
 
     function resize() {
       const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = rect.width || canvas.offsetWidth || 300;
-      canvas.height = rect.height || canvas.offsetHeight || 156;
+      // While the card is filtered out the rect is 0x0; keep the last good size
+      // so the scene does not collapse and divide-by-zero on the scale factor.
+      const width = Math.round(rect.width || canvas.offsetWidth || 0);
+      const height = Math.round(rect.height || canvas.offsetHeight || 0);
+      if (width > 0 && height > 0) {
+        canvas.width = width;
+        canvas.height = height;
+      } else if (!canvas.width || !canvas.height) {
+        canvas.width = 300;
+        canvas.height = 156;
+      }
     }
     resize();
     new ResizeObserver(resize).observe(canvas.parentElement);
@@ -2417,16 +2844,44 @@
     }
 
     let last = performance.now();
+    let rafId = null;
+    let onScreen = false;
+
     function loop(now) {
       const dt = Math.min(0.03, (now - last) / 1000);
       last = now;
       update(dt);
       drawScene();
-      requestAnimationFrame(loop);
+      rafId = requestAnimationFrame(loop);
     }
+
+    // The card sits in a filterable grid, so this used to animate forever even
+    // when scrolled away or hidden by a category filter. Only run when visible.
+    function start() {
+      if (rafId !== null || !onScreen || document.hidden) return;
+      last = performance.now();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function stop() {
+      if (rafId === null) return;
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    new IntersectionObserver(entries => {
+      onScreen = entries[entries.length - 1].isIntersecting;
+      if (onScreen) start();
+      else stop();
+    }).observe(canvas);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stop();
+      else start();
+    });
+
     // Fire first shot immediately on start
     loopTimer = LOOP_INTERVAL;
-    requestAnimationFrame(loop);
   })();
   </script>
 </body>
