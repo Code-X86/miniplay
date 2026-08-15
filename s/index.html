@@ -41,6 +41,24 @@ tr.win td{color:#c8f9d8}
 .ex{margin-top:16px;padding:14px 16px;background:#0a1019;border:1px solid #1d2a3c;border-radius:12px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;font-size:13px}
 @media(max-width:760px){.row,.stats{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.row,.stats{grid-template-columns:1fr}}
+
+.corner{position:fixed;top:14px;right:16px;z-index:2;padding:5px 11px;border-radius:999px;
+        background:#0d1420;border:1px solid #233146;color:#96a3b7;
+        font:12px/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em;cursor:pointer}
+.corner:hover,.corner[aria-expanded="true"]{border-color:#5476a5;color:#e8eef7}
+.panel{position:fixed;top:48px;right:16px;z-index:2;width:min(430px,calc(100vw - 32px));
+       max-height:calc(100vh - 64px);overflow:auto;padding:18px 20px;
+       background:#0d1420;border:1px solid #233146;border-radius:14px;
+       box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.panel h2{margin:0 0 10px;font-size:15px}
+.panel h3{margin:18px 0 8px;font-size:13px;color:#c6d2e2}
+.panel p{margin:0 0 10px;font-size:12.5px;line-height:1.6}
+.panel pre{margin:0 0 10px;padding:11px 12px;background:#070d16;border:1px solid #1d2a3c;
+           border-radius:9px;overflow-x:auto;
+           font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;color:#cfe0f5}
+.panel code{background:#070d16;border:1px solid #1d2a3c;border-radius:5px;padding:1px 4px;
+            font:11.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+@media(max-width:520px){.panel{top:auto;bottom:12px;right:12px;left:12px;width:auto}}
 </style>
 </head>
 <body><main class="wrap" id="main">
@@ -73,6 +91,26 @@ tr.win td{color:#c8f9d8}
 </section>
 </main>
 
+<button id="apiToggle" class="corner" type="button" aria-expanded="false" aria-controls="apiPanel">API</button>
+<aside id="apiPanel" class="panel" hidden>
+  <h2>API</h2>
+
+  <p class="muted">Returns the short link as plain text — the body is the link and nothing else. Failures are one <code>error:&nbsp;…</code> line.</p>
+  <pre>GET /s/api/gen/#&lt;url&gt;
+       ?emoji=1   allow the emoji alphabet</pre>
+  <p class="muted">The url rides in the fragment, so it never reaches a server.</p>
+
+  <h3>From a terminal</h3>
+  <p class="muted">This site is static, so nothing computes a link server-side and <code>curl</code> alone cannot drive the endpoint above. Fetch the codecs and run them locally instead:</p>
+  <pre>curl -s https://austin-code.com/s/cli.js \
+  | node - "https://example.com/long/url"
+
+  --emoji            allow the emoji alphabet
+  --decode &lt;code&gt;    the other direction
+  --base &lt;url&gt;       another deployment</pre>
+  <p class="muted"><code>cli.js</code> pulls <code>codecs.js</code> and runs the same four codecs this page does, so it always agrees with the site.</p>
+</aside>
+
 <script src="./codecs.js"></script>
 <script>
 (function () {
@@ -81,6 +119,23 @@ tr.win td{color:#c8f9d8}
 var SL = window.SHORTLINK;
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+
+/* ---------- api docs ---------- */
+
+// Wired before the resolver's early return, so the corner still works on the
+// "decoded, redirecting" view.
+(function () {
+  var btn = $('apiToggle'), panel = $('apiPanel');
+  function show(open) {
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  btn.onclick = function (e) { e.stopPropagation(); show(panel.hidden); };
+  panel.onclick = function (e) { e.stopPropagation(); };
+  document.addEventListener('click', function () { show(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') show(false); });
+  show(false);  // one source of truth for the state, rather than the markup
+})();
 
 /* ---------- resolving an incoming #code ---------- */
 

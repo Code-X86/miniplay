@@ -100,9 +100,30 @@ The body is the link and nothing else. Failures are a single `error: …` line �
 including for a target that isn't an absolute `http(s)` URL, since the resolver
 would never follow such a link.
 
-The url rides in the fragment, so it never reaches a server — which also means
-`curl` cannot drive this. It is a browser and bookmarklet endpoint; there is no
-server here to run anything.
+The url rides in the fragment, so it never reaches a server. It is a browser and
+bookmarklet endpoint.
+
+### From a terminal
+
+`curl` alone cannot drive the endpoint above, and moving the url into a query
+string would not help: the site is static files, so nothing runs server-side to
+compute a link. The codecs run in whatever client you point at them — so fetch
+the bundle and run it locally:
+
+```
+curl -s https://austin-code.com/s/cli.js | node - "https://example.com/long/url"
+curl -s https://austin-code.com/s/cli.js | node - --emoji "https://example.com"
+curl -s https://austin-code.com/s/cli.js | node - --decode "4,r?OM?Qs-y(R=e'uHF5BYPk:"
+```
+
+`cli.js` fetches `s/codecs.js` and runs the same four codecs the page runs, so
+it always agrees with the site. It prints the link on stdout and errors on
+stderr with a non-zero exit, which makes it pipeable. `--base <url>` points it
+at a different deployment.
+
+A genuine `curl https://…/gen?url=…` would need somewhere that executes code —
+a small worker or serverless function running this same `codecs.js`. Nothing
+here rules that out; it is just not something static hosting can do.
 
 ### Emoji mode
 
