@@ -76,7 +76,7 @@ navigated to when it is an absolute `http(s)` URL.
 
 ### Preset links
 
-Version 5 is a table of 90 well-known destinations that ships with the site, so
+Version 5 is a table of 412 well-known destinations that ships with the site, so
 they cost one or two characters — `/s/#1` is youtube.com, `/s/#g` is GitHub.
 Nothing is compressed: the code *is* the lookup key, which is why these reach
 lengths no general codec can. Versions 1–4 carry the whole URL, and the shortest
@@ -96,6 +96,21 @@ Keys are permanent: reassigning one silently redirects every link already handed
 out, so append, never reassign.
 
 Only the destination itself is preset — `youtube.com/watch?v=…` encodes in full.
+
+Destinations are listed in `tools/sites.txt`, one per line, and added by:
+
+```
+node tools/add-presets.mjs --dry-run   # what would change
+node tools/add-presets.mjs             # append them
+node tools/add-presets.mjs --check     # validate, non-zero on problems
+```
+
+It only ever appends — an entry already in the table keeps its key, so the same
+list and the same table give the same keys every run. New keys prefer the site's
+own initial (`figma.com` → `f`, `python.org` → `py`) and fall back to the next
+free slot. Assignment draws from `A-Za-z0-9-_~` rather than the full 81: a key
+is the last thing in the URL, and linkifiers routinely trim a trailing
+`. , ; : ? ! ) '`, which would break the link on paste.
 
 ### Generating
 
