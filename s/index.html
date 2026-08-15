@@ -76,6 +76,11 @@ tr.win td{color:#c8f9d8}
     <label for="emoji">Emoji mode</label>
   </div>
 
+  <div style="margin-top:12px">
+    <label for="pw">Password <span class="muted">— optional, encrypts the destination</span></label>
+    <input id="pw" type="password" class="mono" autocomplete="new-password" placeholder="leave empty for a normal link">
+  </div>
+
   <div class="btns">
     <button id="encodeBtn" class="primary" type="button">Create link</button>
   </div>
@@ -113,14 +118,21 @@ tr.win td{color:#c8f9d8}
   <p class="muted">Keys come from the same 81-character url-safe set the codes use, so there is room for 6,642 of them.</p>
   <p class="muted">Only the destination itself is preset. <code>youtube.com/watch?v=…</code> encodes in full as usual.</p>
 
+  <h3>Password protection</h3>
+  <p class="muted">Fill in the password field and the destination is encrypted with a key derived from it (PBKDF2 + AES-GCM). Only the ciphertext is in the link; the password is not, so it has to be typed on arrival. Costs about 47 extra characters.</p>
+  <pre>curl -s https://austin-code.com/s/cli.js \
+  | node - --password hunter2 "https://example.com"</pre>
+  <p class="muted">Anyone with the link learns nothing about where it goes. A wrong password fails outright rather than decrypting to something plausible.</p>
+
   <h3>From a terminal</h3>
   <p class="muted">This site is static, so nothing computes a link server-side and <code>curl</code> alone cannot drive the endpoint above. Fetch the codecs and run them locally instead:</p>
   <pre>curl -s https://austin-code.com/s/cli.js \
   | node - "https://example.com/long/url"
 
-  --emoji            allow the emoji alphabet
-  --decode &lt;code&gt;    the other direction
-  --base &lt;url&gt;       another deployment</pre>
+  --emoji             allow the emoji alphabet
+  --decode &lt;code&gt;     the other direction
+  --password &lt;pw&gt;     lock or unlock
+  --base &lt;url&gt;        another deployment</pre>
   <p class="muted"><code>cli.js</code> pulls <code>codecs.js</code> and runs the same four codecs this page does, so it always agrees with the site.</p>
 </aside>
 
@@ -152,6 +164,40 @@ function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&'
 
 /* ---------- resolving an incoming #code ---------- */
 
+// A protected code carries an encrypted destination. Nothing about where it
+// leads is knowable until the password is typed, so ask before going anywhere.
+function askForPassword(code) {
+  $('main').innerHTML =
+    '<h1>Password required</h1>' +
+    '<p class="muted">This link\'s destination is encrypted. It is not stored anywhere and is not in the link \u2014 only the password unlocks it.</p>' +
+    '<section class="card">' +
+      '<label for="unpw">Password</label>' +
+      '<input id="unpw" type="password" class="mono" autocomplete="current-password">' +
+      '<div class="btns"><button id="unBtn" class="primary" type="button">Open link</button></div>' +
+      '<p class="muted" id="unMsg" style="margin:10px 0 0"></p>' +
+    '</section>';
+
+  var input = $('unpw'), btn = $('unBtn'), msg = $('unMsg');
+  function attempt() {
+    if (!input.value) return;
+    btn.disabled = true;
+    msg.textContent = 'Checking\u2026';
+    SL.unlock(code, input.value).then(function (url) {
+      msg.innerHTML = 'Opening <span class="good">' + esc(url) + '</span>\u2026';
+      setTimeout(function () { location.replace(url); }, 250);
+    }, function (e) {
+      btn.disabled = false;
+      // AES-GCM authenticates, so a wrong password fails outright rather than
+      // decrypting to rubbish
+      msg.innerHTML = '<span class="bad">' + (e && e.wrongPassword ? 'Wrong password.' : esc(String(e && e.message || e))) + '</span>';
+      input.select();
+    });
+  }
+  btn.onclick = attempt;
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') attempt(); });
+  input.focus();
+}
+
 var incoming = '';
 if (location.hash.length > 1) {
   incoming = location.hash.slice(1);
@@ -163,6 +209,7 @@ if (location.hash.length > 1) {
 }
 if (incoming) {
   SL.resolve(incoming, new URLSearchParams(location.search).get('v')).then(function (hit) {
+    if (hit && hit.protected) { askForPassword(incoming); return; }
     if (hit) {
       $('main').innerHTML = '<h1>Shortlink decoded</h1><p class="muted">Version ' + hit.version + ' recognised this code.</p><div class="bigcode">' + esc(hit.url) + '</div><p class="muted">Redirecting\u2026</p>';
       setTimeout(function () { location.replace(hit.url); }, 250);
@@ -183,7 +230,10 @@ async function encode() {
   var input = $('url').value.trim();
   if (!input) return;
 
-  var best = await SL.encodeBest(input, $('emoji').checked);
+  var pw = $('pw').value;
+  var best = pw
+    ? await SL.encodeProtected(input, pw, $('emoji').checked)
+    : await SL.encodeBest(input, $('emoji').checked);
 
   $('out').hidden = false;
   if (!best) {
@@ -200,7 +250,8 @@ async function encode() {
   $('status').textContent = best.len + ' characters'
     + (best.len < input.length ? ', down from ' + input.length
                                : ' \u2014 the original ' + input.length + ' is already shorter')
-    + (best.emoji ? ' \u00b7 emoji' : '') + '.';
+    + (best.emoji ? ' \u00b7 emoji' : '')
+    + (best.protected ? ' \u00b7 encrypted, the password is not in the link' : '') + '.';
 }
 
 function flash(msg) {

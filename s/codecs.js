@@ -7,6 +7,127 @@ window.SHORTLINK = (function () {
 'use strict';
 
 var CODECS = {
+  // ---- version 6: password protected ---------------------------------------
+  // The destination is encrypted with a key derived from a password, and only
+  // the ciphertext travels in the link. The password itself is never in the
+  // URL — putting it there would protect nothing — so it has to be typed on
+  // arrival. Still entirely static: WebCrypto runs in the browser.
+  //
+  // What gets encrypted is the ordinary short code, not the raw URL, so all the
+  // compression above still applies and the ciphertext stays small.
+  //
+  // payload: [0xE0][salt 8][iv 12][AES-GCM ciphertext]
+  // The tag is outside the ciphertext on purpose: a page must be able to tell
+  // that a code needs a password without having the password.
+  6: (function () {
+    var A = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._~!$&'()*+,;=:@/?";
+    var BASE = BigInt(A.length);
+    var AVAL = {}; for (var i = 0; i < A.length; i++) AVAL[A[i]] = i;
+    var TAG = 0xE0, SALT = 8, IV = 12, ITERATIONS = 150000;
+    var TE = new TextEncoder(), TD = new TextDecoder();
+
+    function pack81(bytes) {
+      if (!bytes.length) return '0';
+      var x = 0n;
+      for (var i = 0; i < bytes.length; i++) x = (x << 8n) | BigInt(bytes[i]);
+      var out = '';
+      while (x) { out = A[Number(x % BASE)] + out; x /= BASE; }
+      var zeros = 0; while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
+      return A[0].repeat(zeros) + out;
+    }
+    function unpack81(str) {
+      var zeros = 0; while (zeros < str.length && str[zeros] === A[0]) zeros++;
+      var x = 0n;
+      for (var i = zeros; i < str.length; i++) {
+        var v = AVAL[str[i]];
+        if (v === undefined) throw new Error('bad base81 character');
+        x = x * BASE + BigInt(v);
+      }
+      var tail = [];
+      while (x) { tail.unshift(Number(x & 255n)); x >>= 8n; }
+      var out = new Uint8Array(zeros + tail.length);
+      out.set(tail, zeros);
+      return out;
+    }
+    function routeSafeEncode(c) { return c.replace(/!/g, '!!').replace(/\//g, '!s'); }
+    function routeSafeDecode(c) {
+      var out = '';
+      for (var i = 0; i < c.length; i++) {
+        if (c[i] !== '!') { out += c[i]; continue; }
+        if (++i >= c.length) throw new Error('bad route escape');
+        if (c[i] === '!') out += '!';
+        else if (c[i] === 's') out += '/';
+        else throw new Error('bad route escape');
+      }
+      return out;
+    }
+
+    var subtle = (typeof crypto !== 'undefined' && crypto.subtle) ? crypto.subtle : null;
+    var available = !!subtle;
+
+    async function keyFrom(password, salt) {
+      var base = await subtle.importKey('raw', TE.encode(password), 'PBKDF2', false, ['deriveKey']);
+      return subtle.deriveKey(
+        { name: 'PBKDF2', salt: salt, iterations: ITERATIONS, hash: 'SHA-256' },
+        base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    }
+
+    // Is this a protected code? Answerable without the password, by design.
+    function looksProtected(code) {
+      try {
+        var b = unpack81(routeSafeDecode(String(code).trim()));
+        return b.length > 1 + SALT + IV && b[0] === TAG;
+      } catch (e) { return false; }
+    }
+
+    async function lock(innerCode, password) {
+      if (!available) throw new Error('this browser has no WebCrypto');
+      if (!password) throw new Error('no password given');
+      var salt = crypto.getRandomValues(new Uint8Array(SALT));
+      var iv = crypto.getRandomValues(new Uint8Array(IV));
+      var key = await keyFrom(password, salt);
+      var ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, TE.encode(innerCode)));
+      var out = new Uint8Array(1 + SALT + IV + ct.length);
+      out[0] = TAG; out.set(salt, 1); out.set(iv, 1 + SALT); out.set(ct, 1 + SALT + IV);
+      return routeSafeEncode(pack81(out));
+    }
+
+    async function unlock(code, password) {
+      if (!available) throw new Error('this browser has no WebCrypto');
+      var b = unpack81(routeSafeDecode(String(code).trim()));
+      if (b[0] !== TAG) throw new Error('not a protected code');
+      var salt = b.slice(1, 1 + SALT), iv = b.slice(1 + SALT, 1 + SALT + IV);
+      var ct = b.slice(1 + SALT + IV);
+      var key = await keyFrom(password, salt);
+      var plain;
+      try {
+        plain = await subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+      } catch (e) {
+        // GCM authenticates, so a wrong password fails here rather than
+        // yielding plausible rubbish
+        var err = new Error('wrong password');
+        err.wrongPassword = true;
+        throw err;
+      }
+      return TD.decode(plain);
+    }
+
+    return {
+      emoji: false,
+      protects: true,
+      available: available,
+      addScheme: function (s) {
+        if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+        return /^[^\s/?#]+\.[^\s/?#]{2,}/.test(s) ? 'https://' + s : s;
+      },
+      looksProtected: looksProtected,
+      lock: lock,
+      unlock: unlock,
+      // never resolves on its own: a protected code needs the password
+      decode: function () { throw new Error('protected code'); },
+      encode: function (input) { return { normalized: input, items: [] }; }
+    };
+  })(),
   // ---- version 5: the preset table ----------------------------------------
   // A short list of destinations that ship with the site, so they cost one or
   // two characters instead of being encoded at all. Nothing here is compressed:
@@ -2384,6 +2505,10 @@ var ORDER = [5, 4, 3, 2, 1];
 // first. Either way a result is only accepted when it is an absolute http(s)
 // URL, and version 4 additionally checks its own tag and checksum.
 async function resolve(code, hint) {
+  // A protected code is detectable without the password, so say so rather than
+  // sweeping the codecs and reporting it as unreadable.
+  if (CODECS[6].looksProtected(code)) return { protected: true };
+
   var order = ORDER.slice();
   if (hint && CODECS[hint]) order = [Number(hint)].concat(order.filter(function (v) { return String(v) !== hint; }));
   for (var i = 0; i < order.length; i++) {
@@ -2422,6 +2547,26 @@ function sameTarget(a, b) {
   return fix(a) === fix(b);
 }
 
+// Encrypt the ordinary short code rather than the URL, so every bit of
+// compression above still counts and only the ciphertext grows.
+async function encodeProtected(input, password, useEmoji) {
+  var best = await encodeBest(input, useEmoji);
+  if (!best) return null;
+  var code = await CODECS[6].lock(best.code, password);
+  return {
+    version: 6, emoji: false, protected: true, strategy: 'encrypted ' + best.strategy,
+    code: code, len: code.length, inner: best, normalized: best.normalized
+  };
+}
+
+// Returns the destination, or throws with .wrongPassword set.
+async function unlock(code, password) {
+  var inner = await CODECS[6].unlock(code, password);
+  var hit = await resolve(inner, null);
+  if (!hit || !hit.url) throw new Error('the code inside did not resolve');
+  return hit.url;
+}
+
 async function encodeBest(input, useEmoji) {
   var all = [], want = canonical(input);
   for (var oi = 0; oi < ORDER.length; oi++) {
@@ -2454,5 +2599,10 @@ async function encodeBest(input, useEmoji) {
   return null;
 }
 
-return { CODECS: CODECS, ORDER: ORDER, resolve: resolve, encodeBest: encodeBest };
+return {
+  CODECS: CODECS, ORDER: ORDER,
+  resolve: resolve, encodeBest: encodeBest,
+  encodeProtected: encodeProtected, unlock: unlock,
+  canProtect: CODECS[6].available
+};
 })();

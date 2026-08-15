@@ -172,6 +172,34 @@ would never follow such a link.
 The url rides in the fragment, so it never reaches a server. It is a browser and
 bookmarklet endpoint.
 
+### Password protection
+
+Version 6 encrypts the destination instead of encoding it. A key is derived
+from the password with PBKDF2-SHA256 (150k iterations) and the payload is
+sealed with AES-GCM-256:
+
+```
+[0xE0][salt 8][iv 12][ciphertext]
+```
+
+What gets encrypted is the ordinary short code, not the raw URL, so all the
+compression above still applies and only the crypto floor is added — about 47
+characters regardless of how long the destination is.
+
+The password is never in the link. Putting it there would protect nothing, so
+it has to be typed on arrival: `resolve()` reports `{protected: true}` and the
+page prompts. The tag byte sits outside the ciphertext deliberately, so a page
+can tell that a code needs a password *without* having the password.
+
+A wrong password fails outright rather than decrypting to something plausible —
+AES-GCM authenticates, so tampering and bad keys are rejected, not guessed at.
+Salt and IV are random per link, so locking the same URL twice gives different
+codes.
+
+This is real encryption, but it is only ever as strong as the password. A short
+or guessable one can be attacked offline by anyone holding the link, since they
+have the ciphertext.
+
 ### From a terminal
 
 `curl` alone cannot drive the endpoint above, and moving the url into a query
@@ -183,6 +211,8 @@ the bundle and run it locally:
 curl -s https://austin-code.com/s/cli.js | node - "https://example.com/long/url"
 curl -s https://austin-code.com/s/cli.js | node - --emoji "https://example.com"
 curl -s https://austin-code.com/s/cli.js | node - --decode "4,r?OM?Qs-y(R=e'uHF5BYPk:"
+curl -s https://austin-code.com/s/cli.js | node - --password hunter2 "https://example.com"
+curl -s https://austin-code.com/s/cli.js | node - --password hunter2 --decode "<code>"
 ```
 
 `cli.js` fetches `s/codecs.js` and runs the same four codecs the page runs, so
