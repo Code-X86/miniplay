@@ -469,15 +469,53 @@ var CODECS = {
     // have several keys — the numeric ones handed out first still decode — so
     // encoding picks the shortest, and ties break alphabetically to keep the
     // choice stable across builds.
+    // Sections that turn up on the same host over and over. A preset host plus
+    // one of these still resolves to a handful of characters rather than
+    // falling through to a codec that has to spell the whole URL out.
+    var PATHS = {
+      'a': '/about', 'c': '/contact', 'l': '/login', 'g': '/signup', 'p': '/pricing',
+      'b': '/blog', 'd': '/docs', 'h': '/help', 's': '/support', 'j': '/careers',
+      'v': '/privacy', 't': '/terms', 'e': '/settings', 'u': '/account', 'r': '/profile',
+      'q': '/search', 'n': '/news', 'f': '/faq', 'w': '/download', 'i': '/api',
+      'k': '/status', 'm': '/team', 'z': '/press', 'y': '/legal', 'x': '/security',
+      'A': '/developers', 'B': '/community', 'C': '/forum', 'D': '/shop', 'E': '/store',
+      'F': '/cart', 'G': '/checkout', 'H': '/dashboard', 'I': '/explore', 'J': '/trending',
+      'K': '/new', 'L': '/popular', 'M': '/feed', 'N': '/notifications', 'O': '/messages',
+      'P': '/watch', 'Q': '/library', 'R': '/playlist', 'S': '/subscriptions', 'T': '/history',
+      'U': '/pricing/', 'V': '/jobs', 'W': '/features', 'X': '/changelog', 'Y': '/roadmap',
+      'Z': '/faq/', '0': '/index.html', '1': '/home', '2': '/browse', '3': '/categories'
+    };
+
+    // '.' separates a host key from a path key, so it may never appear inside
+    // either one — that is what keeps "g" and "g.a" from being ambiguous.
+    var SEP = '.';
     var KEYSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._~!$&'()*+,;=:@/?";
     var BY_URL = {};
     for (var k in PRESETS) {
       if (k.length < 1 || k.length > 2) throw new Error('preset key must be 1-2 characters: ' + k);
+      if (k.indexOf(SEP) >= 0) throw new Error('preset key may not contain "' + SEP + '": ' + k);
       for (var ci = 0; ci < k.length; ci++) {
         if (KEYSET.indexOf(k[ci]) < 0) throw new Error('preset key outside the url-safe set: ' + k);
       }
       var cur = BY_URL[PRESETS[k]];
       if (!cur || k.length < cur.length || (k.length === cur.length && k < cur)) BY_URL[PRESETS[k]] = k;
+    }
+
+    var BY_PATH = {};
+    for (var pk in PATHS) {
+      if (pk.length < 1 || pk.length > 2) throw new Error('path key must be 1-2 characters: ' + pk);
+      if (pk.indexOf(SEP) >= 0) throw new Error('path key may not contain "' + SEP + '": ' + pk);
+      if (BY_PATH[PATHS[pk]]) throw new Error('duplicate path: ' + PATHS[pk]);
+      BY_PATH[PATHS[pk]] = pk;
+    }
+
+    // Every preset destination is a bare origin, so host + path composes by
+    // dropping the trailing slash. Anything else is left to the codecs.
+    function originOf(url) { return /^https?:\/\/[^/]+\/$/.test(url) ? url.slice(0, -1) : null; }
+    var BY_ORIGIN = {};
+    for (var u2 in BY_URL) {
+      var o = originOf(u2);
+      if (o && !BY_ORIGIN[o]) BY_ORIGIN[o] = BY_URL[u2];
     }
 
     function addScheme(s) {
@@ -491,18 +529,37 @@ var CODECS = {
       preset: true,
       addScheme: addScheme,
       decode: function (code) {
-        var u = PRESETS[String(code).trim()];
-        if (!u) throw new Error('not a preset code');
-        return u;
+        code = String(code).trim();
+        var cut = code.indexOf(SEP);
+        if (cut < 0) {
+          var u = PRESETS[code];
+          if (!u) throw new Error('not a preset code');
+          return u;
+        }
+        var host = PRESETS[code.slice(0, cut)], path = PATHS[code.slice(cut + 1)];
+        if (!host || !path) throw new Error('not a preset code');
+        var origin = originOf(host);
+        if (!origin) throw new Error('not a preset code');
+        return origin + path;
       },
       encode: function (input) {
-        var s = normalize(input);
+        var s = normalize(input), items = [];
         // tolerate the trailing slash going either way
         var code = BY_URL[s] || BY_URL[s.replace(/\/$/, '')] || BY_URL[s + '/'];
-        return {
-          normalized: s,
-          items: code ? [{ name: 'preset', b: new Uint8Array(0), code: code, len: code.length }] : []
-        };
+        if (code) {
+          items.push({ name: 'preset', b: new Uint8Array(0), code: code, len: code.length });
+        } else {
+          // a preset host with one of the common sections on it
+          var cut = s.indexOf('/', s.indexOf('//') + 2);
+          if (cut > 0) {
+            var hk = BY_ORIGIN[s.slice(0, cut)], pk = BY_PATH[s.slice(cut)];
+            if (hk && pk) {
+              var c2 = hk + SEP + pk;
+              items.push({ name: 'preset host + path', b: new Uint8Array(0), code: c2, len: c2.length });
+            }
+          }
+        }
+        return { normalized: s, items: items };
       }
     };
   })(),

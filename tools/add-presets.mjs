@@ -58,12 +58,29 @@ for (const { key, url } of existing) {
   catch { problems.push(`'${url}' is not a valid url`); }
 }
 
+// the path table lives in codecs.js and is hand-maintained; validate it here
+const pathBlock = source.match(/var PATHS = \{([\s\S]*?)\n    \};/);
+const paths = pathBlock ? [...pathBlock[1].matchAll(entryRe)].map(x => ({ key: unq(x[1], x[2]), path: unq(x[3], x[4]) })) : [];
+const seenPath = new Set(), seenPathKey = new Set();
+for (const { key, path } of paths) {
+  if (seenPathKey.has(key)) problems.push(`duplicate path key '${key}'`);
+  seenPathKey.add(key);
+  if (key.length < 1 || key.length > 2) problems.push(`path key '${key}' is not 1-2 characters`);
+  if (key.includes('.')) problems.push(`path key '${key}' contains the host/path separator`);
+  if (seenPath.has(path)) problems.push(`duplicate path '${path}'`);
+  seenPath.add(path);
+  if (!path.startsWith('/')) problems.push(`path '${path}' does not start with /`);
+}
+for (const { key } of existing) if (key.includes('.')) problems.push(`key '${key}' contains the host/path separator`);
+
 if (checkOnly) {
   const dests = new Set(existing.map(e => e.url));
   if (problems.length) { problems.forEach(p => console.error('  ' + p)); fail(`${problems.length} problem(s)`); }
   console.log(`ok: ${existing.length} keys over ${dests.size} destinations`);
   console.log(`    ${existing.filter(e => e.key.length === 1).length} single-character keys`);
   console.log(`    ${MAX_KEYS - existing.length} of ${MAX_KEYS} assignable slots free (${VALID.length + VALID.length ** 2} addressable)`);
+  const origins = existing.filter(e => /^https?:\/\/[^/]+\/$/.test(e.url)).length;
+  console.log(`    ${paths.length} path keys, composing to ${origins * paths.length} host+path combinations`);
   process.exit(0);
 }
 if (problems.length) { problems.forEach(p => console.error('  ' + p)); fail(`${problems.length} problem(s) in the existing table`); }

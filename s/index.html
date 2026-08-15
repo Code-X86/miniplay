@@ -105,7 +105,11 @@ tr.win td{color:#c8f9d8}
   <pre>/s/#0  google.com    /s/#g   github.com
 /s/#1  youtube.com   /s/#py  python.org
 /s/#9  claude.ai     /s/#f   figma.com</pre>
-  <p class="muted">Keys come from the same 81-character url-safe set the codes use, so there is room for 6,642 of them.</p>
+  <p class="muted">Common sections compose onto a preset host with a dot, so those stay tiny too — 55 paths across every host.</p>
+  <pre>/s/#g.a   github.com/about
+/s/#py.d  python.org/docs
+/s/#f.p   figma.com/pricing</pre>
+  <p class="muted">Keys come from the same 81-character url-safe set the codes use, so there is room for 6,642 hosts and 22,660 host-plus-path combinations.</p>
   <p class="muted">Only the destination itself is preset. <code>youtube.com/watch?v=…</code> encodes in full as usual.</p>
 
   <h3>From a terminal</h3>
