@@ -1,0 +1,11 @@
+# GitHub Pages builds this site with Jekyll. Everything here is plain static
+# files — this config exists only to keep the build tooling off the web.
+#
+# tools/ holds the preset generator and its site list. They belong in the repo
+# but should not be served: nothing on the site loads them, and publishing them
+# invites people to treat sites.txt as an endpoint.
+exclude:
+  - tools
+  - README.md
+  - FULLSCREEN_IMPROVEMENTS.md
+  - docs
