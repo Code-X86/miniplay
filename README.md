@@ -99,10 +99,17 @@ A preset host also composes with 407 common sections — `/about`, `/docs`,
 `/pricing`, `/login` and so on — joined by a dot:
 
 ```
-/s/#g.a    github.com/about        3 chars, vs 8 without the table
-/s/#py.d   python.org/docs         4, vs 20
-/s/#f.p    figma.com/pricing       3, vs 22
+/s/#g.a         github.com/about                3 chars, vs 8 without the table
+/s/#py.d        python.org/docs                 4, vs 20
+/s/#g.a.d       github.com/about/docs           5, vs 17
+/s/#bR.a.y.t    mozilla.org/about/legal/terms   8, vs 31
 ```
+
+Sections stack up to four deep — every part after the host is another section.
+Beyond four a real codec is usually shorter anyway, and `encodeBest` would drop
+the longer candidate regardless. A trailing slash is never silently dropped: if
+the sections do not rebuild the path exactly, the URL falls through to the
+codecs.
 
 Across a sample of ten such URLs that is 78% shorter. The dot is what keeps the
 codes unambiguous: neither a host key nor a path key may contain one, so `g` and
@@ -137,6 +144,13 @@ link takes — before handing it out. A codec round-tripping its own output is n
 enough on its own: versions 1–3 put no version tag in a code, so a short code
 minted by one can also be valid input to another and decode to something else.
 The shortest candidate that survives the real resolution path is the one you get.
+
+That check compares against what the caller asked for, not against the codec's
+own normalization. Versions 1–2 strip a trailing slash, so a candidate validated
+against its own output could hand back `/pricing` for `/pricing/` — different
+resources on plenty of servers. A bare origin with no path and one with `/` are
+treated as equal, since those genuinely are the same resource; everything else
+has to match exactly.
 
 ### API
 

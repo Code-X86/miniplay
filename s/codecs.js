@@ -1482,19 +1482,25 @@ var CODECS = {
       emoji: false,
       preset: true,
       addScheme: addScheme,
+      // Sections stack: every part after the host is another section, so
+      // /about/docs is host + a + d. Neither kind of key can contain the
+      // separator, so splitting on it stays unambiguous at any depth.
       decode: function (code) {
         code = String(code).trim();
-        var cut = code.indexOf(SEP);
-        if (cut < 0) {
-          var u = PRESETS[code];
-          if (!u) throw new Error('not a preset code');
-          return u;
-        }
-        var host = PRESETS[code.slice(0, cut)], path = PATHS[code.slice(cut + 1)];
-        if (!host || !path) throw new Error('not a preset code');
+        var parts = code.split(SEP);
+        var host = PRESETS[parts[0]];
+        if (!host) throw new Error('not a preset code');
+        if (parts.length === 1) return host;
+
         var origin = originOf(host);
         if (!origin) throw new Error('not a preset code');
-        return origin + path;
+        var out = origin;
+        for (var i = 1; i < parts.length; i++) {
+          var seg = PATHS[parts[i]];
+          if (!seg) throw new Error('not a preset code');
+          out += seg;
+        }
+        return out;
       },
       encode: function (input) {
         var s = normalize(input), items = [];
@@ -1502,17 +1508,34 @@ var CODECS = {
         var code = BY_URL[s] || BY_URL[s.replace(/\/$/, '')] || BY_URL[s + '/'];
         if (code) {
           items.push({ name: 'preset', b: new Uint8Array(0), code: code, len: code.length });
-        } else {
-          // a preset host with one of the common sections on it
-          var cut = s.indexOf('/', s.indexOf('//') + 2);
-          if (cut > 0) {
-            var hk = BY_ORIGIN[s.slice(0, cut)], pk = BY_PATH[s.slice(cut)];
-            if (hk && pk) {
-              var c2 = hk + SEP + pk;
-              items.push({ name: 'preset host + path', b: new Uint8Array(0), code: c2, len: c2.length });
-            }
-          }
+          return { normalized: s, items: items };
         }
+
+        var cut = s.indexOf('/', s.indexOf('//') + 2);
+        if (cut < 0) return { normalized: s, items: items };
+        var hk = BY_ORIGIN[s.slice(0, cut)];
+        if (!hk) return { normalized: s, items: items };
+
+        var rest = s.slice(cut);
+        var keys = [], built = '';
+        // Beyond four sections a real codec is generally shorter anyway, and
+        // encodeBest would drop the longer candidate regardless.
+        var segs = rest.split('/').filter(Boolean);
+        if (!segs.length || segs.length > 4) return { normalized: s, items: items };
+        for (var i = 0; i < segs.length; i++) {
+          var pk = BY_PATH['/' + segs[i]];
+          if (!pk) return { normalized: s, items: items };
+          keys.push(pk);
+          built += '/' + segs[i];
+        }
+        // a trailing slash would be lost by the split, so only claim an exact match
+        if (built !== rest) return { normalized: s, items: items };
+
+        var c2 = hk + SEP + keys.join(SEP);
+        items.push({
+          name: keys.length > 1 ? 'preset host + ' + keys.length + ' sections' : 'preset host + path',
+          b: new Uint8Array(0), code: c2, len: c2.length
+        });
         return { normalized: s, items: items };
       }
     };
@@ -2384,8 +2407,23 @@ async function resolve(code, hint) {
 // what resolve() will do with the link, so every candidate is checked through
 // that exact path — untargeted, the way a bare /s/#code link arrives — and the
 // shortest one that survives is the one handed out.
+// What the caller actually asked for, independent of any codec's own opinion.
+function canonical(s) {
+  s = CODECS[5].addScheme(String(s).trim());
+  try { return new URL(s).href; } catch (e) { return s; }
+}
+
+// A bare origin with no path and one with "/" are the same resource, so treat
+// them as equal. /x and /x/ are NOT — some servers serve different things —
+// so everything else has to match exactly.
+function sameTarget(a, b) {
+  if (a === b) return true;
+  var fix = function (u) { return String(u).replace(/^(https?:\/\/[^/]+)$/, '$1/'); };
+  return fix(a) === fix(b);
+}
+
 async function encodeBest(input, useEmoji) {
-  var all = [];
+  var all = [], want = canonical(input);
   for (var oi = 0; oi < ORDER.length; oi++) {
     var v = ORDER[oi], codec = CODECS[v];
     var modes = useEmoji && codec.emoji ? [false, true] : [false];
@@ -2408,7 +2446,10 @@ async function encodeBest(input, useEmoji) {
   for (var i = 0; i < all.length; i++) {
     var hit = null;
     try { hit = await resolve(all[i].code, null); } catch (e) {}
-    if (hit && hit.url === all[i].normalized) return all[i];
+    // Compared against what was asked for, not against the codec's own
+    // normalization: versions 1-2 strip a trailing slash, and checking a
+    // candidate against its own output would let that mangling through.
+    if (hit && sameTarget(hit.url, want)) return all[i];
   }
   return null;
 }
