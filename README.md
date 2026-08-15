@@ -86,22 +86,23 @@ The shortest candidate that survives the real resolution path is the one you get
 ### API
 
 ```
-GET /s/api/gen/#<url>          -> JSON
+GET /s/api/gen/#<url>          -> the short link, as plain text
     ?emoji=1                   allow the emoji alphabet
-    ?pretty=0                  compact output
 ```
 
-```json
-{ "ok": true, "url": "…", "link": "…", "code": "…",
-  "chars": 25, "original": 68, "version": 2,
-  "strategy": "URL grammar → Base81", "emoji": false }
 ```
+/s/api/gen/#https://www.example.com/products/item?id=12345&utm_source=newsletter
+
+https://austin-code.com/s/#4,r?OM?Qs-y(R=e'uHF5BYPk:
+```
+
+The body is the link and nothing else. Failures are a single `error: …` line —
+including for a target that isn't an absolute `http(s)` URL, since the resolver
+would never follow such a link.
 
 The url rides in the fragment, so it never reaches a server — which also means
 `curl` cannot drive this. It is a browser and bookmarklet endpoint; there is no
-server here to run anything. Errors come back as `{"ok": false, "error": …}`,
-including for a target that isn't an absolute `http(s)` URL, since the resolver
-would never follow such a link.
+server here to run anything.
 
 ### Emoji mode
 

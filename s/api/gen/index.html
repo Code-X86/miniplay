@@ -3,86 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>shortlink api · gen</title>
+<title>gen</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#070b12;color:#e8eef7;padding:24px;
-     font:13.5px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}
-pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.k{color:#8fb6ff}.s{color:#a9e6a0}.n{color:#ffce6b}.b{color:#ff8f8f}
-a{color:#93c5fd}
-.hint{margin-top:18px;color:#7e8da0;font-size:12.5px;line-height:1.7}
+html,body{margin:0;background:#070b12;color:#e8eef7}
+body{padding:16px;font:14px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;-webkit-user-select:all;user-select:all}
 </style>
 </head>
-<body>
-<pre id="out">{"ok":null,"status":"working"}</pre>
-<div class="hint" id="hint"></div>
-
+<body><pre id="out"></pre>
 <script src="../../codecs.js"></script>
 <script>
 (function () {
 'use strict';
 
-// GET /s/api/gen/#<url>  ->  JSON describing the shortest link for that URL.
+// GET /s/api/gen/#<url>  ->  the short link, as plain text and nothing else.
+// ?emoji=1 allows the 256-symbol emoji alphabet.
 //
-// The URL rides in the fragment, which never leaves the browser — so this is a
-// browser/bookmarklet endpoint, not something curl can drive. There is no
-// server here to run: the whole site is static files.
-//
-// Options:  ?emoji=1   allow the 256-symbol emoji alphabet
-//           ?pretty=0  emit compact JSON
+// The url rides in the fragment, which never leaves the browser, so this is a
+// browser/bookmarklet endpoint rather than something curl can drive — the site
+// is static files with no server behind it.
 
 var out = document.getElementById('out');
-var q = new URLSearchParams(location.search);
-
-function emit(obj, ok) {
-  var pretty = q.get('pretty') !== '0';
-  var text = JSON.stringify(obj, null, pretty ? 2 : 0);
-  out.textContent = text;
-  document.title = ok ? 'gen · ' + obj.chars + ' chars' : 'gen · error';
-}
-
-document.getElementById('hint').innerHTML =
-  'GET <b>/s/api/gen/#&lt;url&gt;</b> &middot; options <b>?emoji=1</b> <b>?pretty=0</b><br>' +
-  'The url travels in the fragment, so it never reaches a server. ' +
-  '<a href="../../">back to the shortlink page</a>';
+function say(text) { out.textContent = text; }
 
 var target = '';
 if (location.hash.length > 1) {
   target = location.hash.slice(1);
-  // a caller may or may not have percent-encoded it; both should work, and a
-  // stray '%' must not throw
+  // callers may or may not percent-encode; a stray '%' must not throw
   try { target = decodeURIComponent(target); } catch (e) {}
 }
 
 if (!target) {
-  emit({
-    ok: false,
-    error: 'no url given',
-    usage: location.origin + '/s/api/gen/#https://example.com/some/long/path'
-  }, false);
+  say('error: no url given\nusage: /s/api/gen/#https://example.com/some/long/path');
   return;
 }
 
-window.SHORTLINK.encodeBest(target, q.get('emoji') === '1').then(function (best) {
-  if (!best) {
-    emit({ ok: false, error: 'nothing encodable in that url', url: target }, false);
-    return;
-  }
-  var base = new URL('../../', location.href).href.split(/[?#]/)[0];
-  emit({
-    ok: true,
-    url: best.normalized,
-    link: base + '#' + best.code,
-    code: best.code,
-    chars: best.len,
-    original: best.normalized.length,
-    version: best.version,
-    strategy: best.strategy,
-    emoji: !!best.emoji
-  }, true);
+var emoji = new URLSearchParams(location.search).get('emoji') === '1';
+
+window.SHORTLINK.encodeBest(target, emoji).then(function (best) {
+  if (!best) { say('error: nothing encodable in that url'); return; }
+  say(new URL('../../', location.href).href.split(/[?#]/)[0] + '#' + best.code);
 }).catch(function (e) {
-  emit({ ok: false, error: String(e && e.message || e), url: target }, false);
+  say('error: ' + String(e && e.message || e));
 });
 })();
 </script>
