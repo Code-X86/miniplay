@@ -76,7 +76,7 @@ navigated to when it is an absolute `http(s)` URL.
 
 ### Preset links
 
-Version 5 is a table of 412 well-known destinations that ships with the site, so
+Version 5 is a table of 968 well-known destinations that ships with the site, so
 they cost one or two characters — `/s/#1` is youtube.com, `/s/#g` is GitHub.
 Nothing is compressed: the code *is* the lookup key, which is why these reach
 lengths no general codec can. Versions 1–4 carry the whole URL, and the shortest
@@ -95,7 +95,7 @@ the shortest, ties breaking alphabetically so the choice is stable across builds
 Keys are permanent: reassigning one silently redirects every link already handed
 out, so append, never reassign.
 
-A preset host also composes with 55 common sections — `/about`, `/docs`,
+A preset host also composes with 407 common sections — `/about`, `/docs`,
 `/pricing`, `/login` and so on — joined by a dot:
 
 ```
@@ -106,13 +106,15 @@ A preset host also composes with 55 common sections — `/about`, `/docs`,
 
 Across a sample of ten such URLs that is 78% shorter. The dot is what keeps the
 codes unambiguous: neither a host key nor a path key may contain one, so `g` and
-`g.a` can never be confused. 412 hosts × 55 paths is 22,660 combinations, all of
-which the test suite round-trips.
+`g.a` can never be confused. 968 hosts × 407 paths is 400,488 combinations. The suite samples
+those deterministically — every host and every path exercised at least three
+times — rather than walking all of them.
 
 Anything deeper still encodes in full — `github.com/Code-X86/miniplay` and
 `youtube.com/watch?v=…` go through the codecs as usual.
 
-Destinations are listed in `tools/sites.txt`, one per line, and added by:
+Destinations are listed in `tools/sites.txt` and sections in `tools/paths.txt`,
+one per line, both added by:
 
 ```
 node tools/add-presets.mjs --dry-run   # what would change

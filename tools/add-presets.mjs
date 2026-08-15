@@ -17,6 +17,7 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CODECS = join(ROOT, 's', 'codecs.js');
 const SITES = join(ROOT, 'tools', 'sites.txt');
+const PATHS = join(ROOT, 'tools', 'paths.txt');
 
 // A key may legally use any of the 81 url-safe characters, and the table
 // validates against that. Assignment draws from a narrower set on purpose:
@@ -34,8 +35,9 @@ const checkOnly = argv.includes('--check');
 
 /* ---------- read the table out of the shipped source ---------- */
 
-const source = readFileSync(CODECS, 'utf8');
+let source = readFileSync(CODECS, 'utf8');
 const blockRe = /(var PRESETS = \{\n)([\s\S]*?)(\n    \};)/;
+const pathBlockRe = /(var PATHS = \{\n)([\s\S]*?)(\n    \};)/;
 const m = source.match(blockRe);
 if (!m) fail('could not find the PRESETS block in s/codecs.js');
 
@@ -58,9 +60,9 @@ for (const { key, url } of existing) {
   catch { problems.push(`'${url}' is not a valid url`); }
 }
 
-// the path table lives in codecs.js and is hand-maintained; validate it here
-const pathBlock = source.match(/var PATHS = \{([\s\S]*?)\n    \};/);
-const paths = pathBlock ? [...pathBlock[1].matchAll(entryRe)].map(x => ({ key: unq(x[1], x[2]), path: unq(x[3], x[4]) })) : [];
+const pathBlock = source.match(pathBlockRe);
+if (!pathBlock) fail('could not find the PATHS block in s/codecs.js');
+const paths = [...pathBlock[2].matchAll(entryRe)].map(x => ({ key: unq(x[1], x[2]), path: unq(x[3], x[4]) }));
 const seenPath = new Set(), seenPathKey = new Set();
 for (const { key, path } of paths) {
   if (seenPathKey.has(key)) problems.push(`duplicate path key '${key}'`);
@@ -101,6 +103,17 @@ const wanted = readFileSync(SITES, 'utf8').split('\n')
 const dup = wanted.map(w => w.url).filter((u, i, a) => a.indexOf(u) !== i);
 if (dup.length) fail('sites.txt lists these more than once: ' + [...new Set(dup)].join(', '));
 
+const wantedPaths = readFileSync(PATHS, 'utf8').split('\n')
+  .map(l => l.replace(/#.*$/, '').trim())
+  .filter(Boolean)
+  .map(l => (l.startsWith('/') ? l : '/' + l));
+
+const dupPath = wantedPaths.filter((u, i, a) => a.indexOf(u) !== i);
+if (dupPath.length) fail('paths.txt lists these more than once: ' + [...new Set(dupPath)].join(', '));
+for (const p of wantedPaths) if (p.includes('.') && !/\.(html|xml|json|php)$/.test(p)) {
+  fail(`path '${p}' contains a dot, which is the host/path separator`);
+}
+
 /* ---------- assign keys to whatever is new ---------- */
 
 const taken = new Set(existing.map(e => e.key));
@@ -131,6 +144,32 @@ function pick(url) {
   return nextFree();
 }
 
+// paths get keys from the same pool logic, kept separate from host keys
+const takenPath = new Set(paths.map(p => p.key));
+const havePath = new Set(paths.map(p => p.path));
+const pathSeq = keyOrder();
+function nextFreePath() {
+  for (;;) {
+    const { value, done } = pathSeq.next();
+    if (done) fail('ran out of path keys');
+    if (!takenPath.has(value)) return value;
+  }
+}
+function pickPath(path) {
+  const w = path.replace(/[^a-z0-9]/gi, '');
+  const cands = [w[0], w[0] && w[0].toUpperCase(), w.slice(0, 2)]
+    .filter(c => c && c.length <= 2 && [...c].every(ch => KEYSET.includes(ch)));
+  for (const c of cands) if (!takenPath.has(c)) return c;
+  return nextFreePath();
+}
+const addedPaths = [];
+for (const p of wantedPaths) {
+  if (havePath.has(p)) continue;
+  const key = pickPath(p);
+  takenPath.add(key); havePath.add(p);
+  addedPaths.push({ key, path: p });
+}
+
 const added = [];
 for (const w of wanted) {
   if (haveUrl.has(w.url)) continue;
@@ -139,8 +178,8 @@ for (const w of wanted) {
   added.push({ key, url: w.url });
 }
 
-if (!added.length) {
-  console.log(`nothing to add — all ${wanted.length} sites are already in the table`);
+if (!added.length && !addedPaths.length) {
+  console.log(`nothing to add — ${wanted.length} sites and ${wantedPaths.length} paths are all present`);
   process.exit(0);
 }
 
@@ -148,18 +187,30 @@ if (!added.length) {
 
 // JSON.stringify, not hand-rolled quotes: a key may legally BE an apostrophe
 const row = e => `      ${JSON.stringify(e.key)}: ${JSON.stringify(e.url)},`;
-const rows = [
-  ...existing.map(row),
-  '',
-  `      // added by tools/add-presets.mjs`,
-  ...added.map(row),
-].join('\n');
+const prow = e => `      ${JSON.stringify(e.key)}: ${JSON.stringify(e.path)},`;
 
-console.log(`${added.length} new:`);
-for (const e of added) console.log(`  #${e.key.padEnd(3)} ${e.url}`);
-console.log(`\ntable: ${existing.length} -> ${existing.length + added.length} keys`);
-console.log(`slots: ${MAX_KEYS - existing.length - added.length} of ${MAX_KEYS} free`);
+console.log(`${added.length} new sites, ${addedPaths.length} new paths`);
+for (const e of added.slice(0, 6)) console.log(`  #${e.key.padEnd(3)} ${e.url}`);
+if (added.length > 6) console.log(`  … and ${added.length - 6} more`);
+for (const e of addedPaths.slice(0, 6)) console.log(`  .${e.key.padEnd(3)} ${e.path}`);
+if (addedPaths.length > 6) console.log(`  … and ${addedPaths.length - 6} more`);
+
+const hosts = existing.length + added.length;
+const pcount = paths.length + addedPaths.length;
+const origins = [...existing, ...added].filter(e => /^https?:\/\/[^/]+\/$/.test(e.url)).length;
+console.log(`\nhosts: ${existing.length} -> ${hosts}   paths: ${paths.length} -> ${pcount}`);
+console.log(`host+path combinations: ${(origins * pcount).toLocaleString('en-US')}`);
+console.log(`slots: ${MAX_KEYS - hosts} host / ${MAX_KEYS - pcount} path, of ${MAX_KEYS} each`);
 
 if (dryRun) { console.log('\n--dry-run, nothing written'); process.exit(0); }
-writeFileSync(CODECS, source.replace(blockRe, (_, a, __, c) => a + rows + c));
+
+if (added.length) {
+  const rows = [...existing.map(row), '', '      // added by tools/add-presets.mjs', ...added.map(row)].join('\n');
+  source = source.replace(blockRe, (_, a, __, c) => a + rows + c);
+}
+if (addedPaths.length) {
+  const rows = [...paths.map(prow), '', '      // added by tools/add-presets.mjs', ...addedPaths.map(prow)].join('\n');
+  source = source.replace(pathBlockRe, (_, a, __, c) => a + rows + c);
+}
+writeFileSync(CODECS, source);
 console.log('\nwrote s/codecs.js');
