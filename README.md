@@ -74,6 +74,19 @@ A destination typed without a scheme (`youtube.com`) is encoded as
 host-shaped is left alone and never followed — a decoded value is only
 navigated to when it is an absolute `http(s)` URL.
 
+### Preset links
+
+Version 5 is a table of 70 well-known destinations that ships with the site, so
+they cost one or two characters — `/s/#1` is youtube.com, `/s/#42` is Steam.
+Nothing is compressed: the code *is* the lookup key, which is why these reach
+lengths no general codec can. Versions 1–4 carry the whole URL, and the shortest
+code any of them produces is 7 characters, so the 1–2 character space is the
+table's alone and no link minted before it can be shadowed.
+
+Only the destination itself is preset — `youtube.com/watch?v=…` encodes in full.
+Preset keys are permanent: reassigning one silently redirects every link already
+handed out, so append, never reassign.
+
 ### Generating
 
 `encodeBest()` runs every codec, keeps the shortest code, then re-checks that

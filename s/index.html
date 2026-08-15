@@ -100,6 +100,13 @@ tr.win td{color:#c8f9d8}
        ?emoji=1   allow the emoji alphabet</pre>
   <p class="muted">The url rides in the fragment, so it never reaches a server.</p>
 
+  <h3>Preset links</h3>
+  <p class="muted">70 well-known destinations ship with the site and cost one or two characters, because the code is a lookup rather than an encoding — no general codec reaches these lengths.</p>
+  <pre>/s/#0  google.com    /s/#10  github.com
+/s/#1  youtube.com   /s/#42  steam
+/s/#9  claude.ai     /s/#59  this site</pre>
+  <p class="muted">Only the destination itself is preset. <code>youtube.com/watch?v=…</code> encodes in full as usual.</p>
+
   <h3>From a terminal</h3>
   <p class="muted">This site is static, so nothing computes a link server-side and <code>curl</code> alone cannot drive the endpoint above. Fetch the codecs and run them locally instead:</p>
   <pre>curl -s https://austin-code.com/s/cli.js \

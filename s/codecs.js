@@ -7,6 +7,122 @@ window.SHORTLINK = (function () {
 'use strict';
 
 var CODECS = {
+  // ---- version 5: the preset table ----------------------------------------
+  // A short list of destinations that ship with the site, so they cost one or
+  // two characters instead of being encoded at all. Nothing here is compressed:
+  // the code IS the lookup key, which is why these reach lengths no general
+  // codec can. Versions 1-4 carry the whole URL, and the shortest code any of
+  // them produces is 7 characters, so the 1-2 character space is theirs alone
+  // and no link minted before this can be shadowed.
+  //
+  // Keys are permanent: changing what a code points at silently redirects every
+  // link already handed out. Append, never reassign.
+  5: (function () {
+    var PRESETS = {
+      '0': 'https://google.com/',
+      '1': 'https://youtube.com/',
+      '2': 'https://facebook.com/',
+      '3': 'https://instagram.com/',
+      '4': 'https://x.com/',
+      '5': 'https://wikipedia.org/',
+      '6': 'https://reddit.com/',
+      '7': 'https://amazon.com/',
+      '8': 'https://chatgpt.com/',
+      '9': 'https://claude.ai/',
+      '10': 'https://github.com/',
+      '11': 'https://netflix.com/',
+      '12': 'https://tiktok.com/',
+      '13': 'https://linkedin.com/',
+      '14': 'https://whatsapp.com/',
+      '15': 'https://discord.com/',
+      '16': 'https://twitch.tv/',
+      '17': 'https://spotify.com/',
+      '18': 'https://apple.com/',
+      '19': 'https://microsoft.com/',
+      '20': 'https://mail.google.com/',
+      '21': 'https://drive.google.com/',
+      '22': 'https://docs.google.com/',
+      '23': 'https://maps.google.com/',
+      '24': 'https://news.ycombinator.com/',
+      '25': 'https://stackoverflow.com/',
+      '26': 'https://medium.com/',
+      '27': 'https://ebay.com/',
+      '28': 'https://paypal.com/',
+      '29': 'https://pinterest.com/',
+      '30': 'https://yahoo.com/',
+      '31': 'https://bing.com/',
+      '32': 'https://duckduckgo.com/',
+      '33': 'https://cnn.com/',
+      '34': 'https://bbc.com/',
+      '35': 'https://nytimes.com/',
+      '36': 'https://theguardian.com/',
+      '37': 'https://espn.com/',
+      '38': 'https://imdb.com/',
+      '39': 'https://twitter.com/',
+      '40': 'https://roblox.com/',
+      '41': 'https://minecraft.net/',
+      '42': 'https://store.steampowered.com/',
+      '43': 'https://epicgames.com/',
+      '44': 'https://nintendo.com/',
+      '45': 'https://playstation.com/',
+      '46': 'https://xbox.com/',
+      '47': 'https://itch.io/',
+      '48': 'https://poki.com/',
+      '49': 'https://coolmathgames.com/',
+      '50': 'https://openai.com/',
+      '51': 'https://anthropic.com/',
+      '52': 'https://huggingface.co/',
+      '53': 'https://npmjs.com/',
+      '54': 'https://pypi.org/',
+      '55': 'https://crates.io/',
+      '56': 'https://developer.mozilla.org/',
+      '57': 'https://w3schools.com/',
+      '58': 'https://gitlab.com/',
+      '59': 'https://austin-code.com/',
+      '60': 'https://en.wikipedia.org/',
+      '61': 'https://archive.org/',
+      '62': 'https://dropbox.com/',
+      '63': 'https://soundcloud.com/',
+      '64': 'https://vimeo.com/',
+      '65': 'https://imgur.com/',
+      '66': 'https://etsy.com/',
+      '67': 'https://shopify.com/',
+      '68': 'https://stripe.com/',
+      '69': 'https://cloudflare.com/',
+    };
+    var BY_URL = {};
+    for (var k in PRESETS) {
+      if (BY_URL[PRESETS[k]]) throw new Error('duplicate preset url: ' + PRESETS[k]);
+      if (k.length > 2) throw new Error('preset code too long: ' + k);
+      BY_URL[PRESETS[k]] = k;
+    }
+
+    function addScheme(s) {
+      if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+      return /^[^\s/?#]+\.[^\s/?#]{2,}/.test(s) ? 'https://' + s : s;
+    }
+    function normalize(s) { s = addScheme(s.trim()); try { return new URL(s).href; } catch (e) { return s; } }
+
+    return {
+      emoji: false,
+      preset: true,
+      addScheme: addScheme,
+      decode: function (code) {
+        var u = PRESETS[String(code).trim()];
+        if (!u) throw new Error('not a preset code');
+        return u;
+      },
+      encode: function (input) {
+        var s = normalize(input);
+        // tolerate the trailing slash going either way
+        var code = BY_URL[s] || BY_URL[s.replace(/\/$/, '')] || BY_URL[s + '/'];
+        return {
+          normalized: s,
+          items: code ? [{ name: 'preset', b: new Uint8Array(0), code: code, len: code.length }] : []
+        };
+      }
+    };
+  })(),
   // ---- version 4 codec ----------------------------------------------------
   // Adds four systems on top of what v1-v3 do: a host/token dictionary large
   // enough to cover most real URLs, structured packing of hex / digit / base64url
@@ -843,7 +959,7 @@ var CODECS = {
   })()
 };
 
-var ORDER = [4, 3, 2, 1];
+var ORDER = [5, 4, 3, 2, 1];
 
 // Try the named version first when the caller has a hint. Version 1's decoder
 // returns garbage rather than throwing on a foreign code, and version 4's
