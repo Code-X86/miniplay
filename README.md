@@ -1,32 +1,85 @@
-# miniplay
+# austin-code.com
 
-A static browser game hub. **42 games** and **3 apps**, all self-contained — no
-build step, no server, no external CDN calls.
+Two static projects behind one launcher — no build step, no server, no external
+CDN calls.
+
+| Path | What |
+|---|---|
+| `/` | launcher |
+| `/miniplay` | a browser game hub — **43 games** and **3 apps** |
+| `/s/#<code>` | the shortlink lab — all three codecs on one page |
 
 ## Running it
 
-Most games work by opening `index.html` directly. Four (Slope, Baldi's Basics,
-Subway Surfers, Hole.io) are Unity builds that browsers refuse to load from
-`file://`, so for the full library serve the folder:
+Most games work by opening `miniplay/index.html` directly. Four (Slope, Baldi's
+Basics, Subway Surfers, Hole.io) are Unity builds that browsers refuse to load
+from `file://`, so for the full library serve the folder:
 
 ```
 python3 -m http.server 8000
 ```
 
-then open <http://localhost:8000>.
+then open <http://localhost:8000>. Note that `http.server` has no 404 fallback,
+so path-form shortlinks (`/s/3/CODE`) won't resolve locally — use `/s/#CODE`,
+which works on any static server.
 
 ## Layout
 
 ```
-index.html      the hub: styles, cards, registry and player
-Games/          one directory per game
-Apps/           MP3 player, Paint, Periodic Speller
+index.html      launcher
+404.html        not-found page, and the shortlink path router
+miniplay/
+  index.html    the hub: styles, cards, registry and player
+  Games/        one directory per game
+  Apps/         MP3 player, Paint, Periodic Speller
+s/
+  index.html    the whole lab: all three codecs, encoder, decoder, resolver
+  1/ 2/ 3/      redirects, kept so links already shared keep resolving
 docs/           design docs
 ```
 
-Adding a game means two edits to `index.html`: an entry in the `games` registry
-and a matching `<article class="game-card">`. The `data-id` must match the
-registry key and `data-game-id` must match the registry `id`.
+Adding a game means two edits to `miniplay/index.html`: an entry in the `games`
+registry and a matching `<article class="game-card">`. The `data-id` must match
+the registry key and `data-game-id` must match the registry `id`.
+
+## Shortlink routing
+
+The destination is encoded entirely in the URL — there is no database. All three
+codecs live in `s/index.html`, so **`/s/#<code>` resolves a code from any
+version**: it tries version 3, then 2, then 1, and follows the first result that
+is an absolute `http(s)` URL. Order matters because version 1's decoder returns
+garbage rather than throwing when handed a foreign code.
+
+Every other entry shape funnels into that one page:
+
+| URL | Route |
+|---|---|
+| `/s/#<code>` | resolved directly, version auto-detected |
+| `/s/<v>/#<code>` | `s/<v>/index.html` forwards to `/s/?v=<v>#<code>` |
+| `/s/<v>/<code>` | 404s → `404.html` forwards to `/s/?v=<v>#<code>` |
+
+`?v=<v>` is only a hint: that codec is tried first, then the others. The path
+form needs `404.html` because static hosting has no rewrite rules — the page is
+served for any unknown path with the URL intact, which is the one hook available.
+
+The encoder hands out the `#` form by default, since it needs no routing tricks
+and works on any static server. Codes escape `/` so they can never contain a
+reserved `/<n>/` sequence, but the Base81 alphabet includes `?`, so the
+forwarders reassemble a code that the browser split into a query string.
+
+A destination typed without a scheme (`youtube.com`) is encoded as
+`https://youtube.com` so the link actually redirects. Anything that isn't
+host-shaped is left alone and never followed — a decoded value is only
+navigated to when it is an absolute `http(s)` URL.
+
+### Emoji mode
+
+Version 3 only. The winning byte payload is re-packed over a 256-symbol
+alphabet — the 81 URL-safe characters plus 175 single-code-point emojis — so one
+symbol carries a whole byte instead of ~6.34 bits, cutting roughly 21% of the
+characters. A leading `✨` marks the mode, so every code minted before it still
+decodes. Emojis percent-encode to four bytes each, so the code is shorter on
+screen but the raw URL is longer in bytes.
 
 ## Hidden features
 
@@ -58,6 +111,8 @@ phones out.
 | Chess | lhartikk/simple-chess-ai | Apache-2.0 |
 | Sudoku | huaminghuangtw/Web-Sudoku-Puzzle-Game | MIT |
 | Tower Platformer | jakesgordon/javascript-tower-platformer | MIT |
+
+Plinko is written for this project rather than vendored.
 
 Other titles in `Games/` predate this list and are not all permissively
 licensed — check individual directories before redistributing.

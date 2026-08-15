@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plinko</title>
+<style>
+:root{
+  --lacquer:#17110f;
+  --felt:#221814;
+  --panel:#1d1512;
+  --brass:#c9a227;
+  --brass-lit:#ffe08a;
+  --oxblood:#7d2230;
+  --ivory:#f4ece0;
+  --ash:#8a7f76;
+  --jade:#47b98a;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Courier New",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  background:
+    radial-gradient(120% 80% at 50% -10%, #2a1e19 0%, transparent 60%),
+    var(--lacquer);
+  color:var(--ivory);
+  font-family:var(--mono);
+  overflow:hidden;
+}
+#wrap{display:flex;flex-direction:column;height:100%;}
+
+/* ── header ─────────────────────────────────────────────────────────── */
+header{
+  display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+  padding:12px 18px 10px;
+  border-bottom:1px solid rgba(201,162,39,.22);
+  background:linear-gradient(180deg,rgba(201,162,39,.06),transparent);
+}
+.brand{
+  font-size:19px;font-weight:700;letter-spacing:.42em;
+  color:var(--brass-lit);
+  text-shadow:0 0 18px rgba(255,224,138,.35);
+}
+.brand span{color:var(--oxblood);}
+.tagline{color:var(--ash);font-size:11px;letter-spacing:.16em;margin-right:auto;}
+.bank{display:flex;gap:18px;align-items:baseline;}
+.bank div{text-align:right;}
+.bank .k{display:block;font-size:9px;letter-spacing:.18em;color:var(--ash);}
+.bank .v{font-size:19px;font-weight:700;letter-spacing:.02em;}
+.v.up{color:var(--jade);} .v.down{color:#e0705c;}
+
+/* ── layout ─────────────────────────────────────────────────────────── */
+main{display:flex;flex:1;min-height:0;}
+#stage{flex:1;min-width:0;position:relative;}
+canvas{display:block;width:100%;height:100%;}
+
+aside{
+  width:236px;flex:0 0 auto;
+  padding:14px 14px 16px;
+  border-left:1px solid rgba(201,162,39,.18);
+  background:linear-gradient(180deg,var(--panel),#150f0d);
+  overflow-y:auto;overscroll-behavior:contain;
+}
+.grp{margin-bottom:16px;}
+.lbl{
+  display:block;font-size:9px;letter-spacing:.2em;color:var(--ash);
+  margin-bottom:6px;
+}
+.field{
+  display:flex;align-items:center;
+  border:1px solid rgba(201,162,39,.3);border-radius:7px;
+  background:#120d0b;overflow:hidden;
+}
+.field .pre{padding:0 9px;color:var(--brass);font-size:13px;}
+.field input{
+  flex:1;min-width:0;width:100%;
+  padding:9px 10px 9px 0;
+  border:0;outline:0;background:transparent;
+  color:var(--ivory);font:inherit;font-size:15px;font-weight:700;
+}
+.field:focus-within{border-color:var(--brass);box-shadow:0 0 0 3px rgba(201,162,39,.14);}
+.field input::-webkit-outer-spin-button,
+.field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.field input[type=number]{-moz-appearance:textfield;}
+
+.chips{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+.chip{
+  flex:1;min-width:40px;padding:5px 2px;
+  border:1px solid rgba(201,162,39,.22);border-radius:999px;
+  background:transparent;color:var(--ash);
+  font:inherit;font-size:11px;cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.chip:hover{border-color:var(--brass);color:var(--brass-lit);background:rgba(201,162,39,.1);}
+
+#drop{
+  width:100%;padding:13px;margin-top:2px;
+  border:1px solid var(--brass);border-radius:9px;
+  background:linear-gradient(180deg,rgba(201,162,39,.22),rgba(201,162,39,.08));
+  color:var(--brass-lit);
+  font:inherit;font-size:14px;font-weight:700;letter-spacing:.18em;
+  cursor:pointer;transition:background .15s,transform .08s;
+}
+#drop:hover:not(:disabled){background:linear-gradient(180deg,rgba(201,162,39,.36),rgba(201,162,39,.16));}
+#drop:active:not(:disabled){transform:translateY(1px);}
+#drop:disabled{opacity:.4;cursor:not-allowed;}
+.cost{margin-top:7px;font-size:11px;color:var(--ash);text-align:center;}
+.cost b{color:var(--ivory);}
+.warn{color:#e0705c;}
+
+.rule{height:1px;background:rgba(201,162,39,.16);margin:16px 0 14px;}
+
+#log{display:flex;flex-direction:column;gap:3px;max-height:190px;overflow-y:auto;}
+.row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 8px;border-radius:5px;
+  background:rgba(255,255,255,.02);
+  font-size:12px;
+}
+.row .m{font-weight:700;}
+.row .p{font-size:11px;}
+.empty{color:var(--ash);font-size:11px;line-height:1.6;}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;font-size:11px;}
+.stats .k{color:var(--ash);font-size:9px;letter-spacing:.14em;display:block;}
+.stats .v2{color:var(--ivory);font-size:13px;font-weight:700;}
+.mini{font-size:10px;color:var(--ash);line-height:1.55;margin-top:10px;}
+
+.ghost{
+  width:100%;padding:7px;margin-top:8px;
+  border:1px solid rgba(255,255,255,.12);border-radius:7px;
+  background:transparent;color:var(--ash);
+  font:inherit;font-size:11px;cursor:pointer;
+}
+.ghost:hover{border-color:var(--oxblood);color:#e0705c;}
+
+:where(button,input):focus-visible{outline:2px solid var(--brass-lit);outline-offset:2px;}
+
+/* ── small screens ──────────────────────────────────────────────────── */
+@media (max-width:900px){
+  aside{width:200px;padding:12px 10px;}
+  .brand{font-size:16px;letter-spacing:.3em;}
+  .bank .v{font-size:16px;}
+}
+@media (max-width:720px){
+  main{flex-direction:column;}
+  #stage{flex:1 1 auto;min-height:52vh;}
+  aside{
+    width:100%;flex:0 0 auto;max-height:44vh;
+    border-left:0;border-top:1px solid rgba(201,162,39,.18);
+  }
+  .tagline{display:none;}
+  #log{max-height:110px;}
+}
+@media (max-height:560px){
+  header{padding:8px 14px 7px;}
+  .brand{font-size:15px;}
+  .bank .v{font-size:15px;}
+  .grp{margin-bottom:11px;}
+  #drop{padding:10px;}
+}
+@media (prefers-reduced-motion:reduce){
+  #drop{transition:none;}
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div class="brand">PLIN<span>K</span>O</div>
+    <div class="tagline" id="tagline"></div>
+    <div class="bank">
+      <div><span class="k">BALANCE</span><span class="v" id="balance" aria-live="polite">$1,000.00</span></div>
+      <div><span class="k">SESSION</span><span class="v" id="session">$0.00</span></div>
+    </div>
+  </header>
+
+  <main>
+    <div id="stage"><canvas id="board"></canvas></div>
+
+    <aside>
+      <div class="grp">
+        <label class="lbl" for="bet">PRICE PER BALL</label>
+        <div class="field">
+          <span class="pre">$</span>
+          <input id="bet" type="number" min="0.01" step="0.01" value="1.00" inputmode="decimal">
+        </div>
+        <div class="chips">
+          <button class="chip" data-bet="0.10">.10</button>
+          <button class="chip" data-bet="1">1</button>
+          <button class="chip" data-bet="5">5</button>
+          <button class="chip" data-bet="25">25</button>
+        </div>
+      </div>
+
+      <div class="grp">
+        <label class="lbl" for="count">BALLS TO DROP</label>
+        <div class="field">
+          <span class="pre">×</span>
+          <input id="count" type="number" min="1" max="500" step="1" value="10" inputmode="numeric">
+        </div>
+        <div class="chips">
+          <button class="chip" data-count="1">1</button>
+          <button class="chip" data-count="10">10</button>
+          <button class="chip" data-count="50">50</button>
+          <button class="chip" data-count="100">100</button>
+        </div>
+      </div>
+
+      <button id="drop">DROP</button>
+      <div class="cost" id="cost">Costs <b>$10.00</b></div>
+
+      <div class="rule"></div>
+      <span class="lbl">LAST LANDINGS</span>
+      <div id="log"><div class="empty">Nothing dropped yet. Set a price and a count, then drop.</div></div>
+
+      <div class="rule"></div>
+      <span class="lbl">SESSION</span>
+      <div class="stats">
+        <div><span class="k">DROPPED</span><span class="v2" id="s-dropped">0</span></div>
+        <div><span class="k">WAGERED</span><span class="v2" id="s-wagered">$0</span></div>
+        <div><span class="k">RETURNED</span><span class="v2" id="s-returned">$0</span></div>
+        <div><span class="k">ACTUAL RTP</span><span class="v2" id="s-rtp">—</span></div>
+        <div><span class="k">10× CHANCE</span><span class="v2" id="s-top">—</span></div>
+        <div><span class="k">10× HITS</span><span class="v2" id="s-tophits">0</span></div>
+      </div>
+      <div class="mini">Returns <b id="theo">—</b> of what it takes over the long run. Odds are weighted in your favour — edit <code>WEIGHTS</code> in the source to retune.</div>
+      <button class="ghost" id="reset">Reset bank to $1,000</button>
+    </aside>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+// ── payout table ───────────────────────────────────────────────────────────
+// 10x sits on the outside wall where it belongs.
+const SLOTS = [10, 5, 2.5, 1.5, 1, 0.5, 0, 0.5, 1, 1.5, 2.5, 5, 10];
+
+// The board is rigged in the player's favour. Left to pure physics a 12-row
+// triangle sends a ball to the outer wall once in 4096, so an edge 10x is
+// unwinnable. Instead each ball is assigned a slot from these weights on
+// release and steered into it, which keeps 10x on the wall AND hittable.
+// Weights must be symmetric and sum to 1. Everything else derives from them.
+const WEIGHTS = [
+  0.030, 0.012, 0.020, 0.035, 0.060, 0.105,
+  0.476,
+  0.105, 0.060, 0.035, 0.020, 0.012, 0.030
+];
+const ROWS = SLOTS.length - 1;              // 12 peg rows -> 13 gaps
+const SLOT_COLOR = {
+  10:"#e0503c", 5:"#e8892c", 2.5:"#d4a92a", 1.5:"#9fa63a",
+  1:"#6f9350", 0.5:"#4a6d63", 0:"#3b3532"
+};
+
+// ── virtual board space (scaled to fit whatever canvas we get) ─────────────
+const GAP = 52, ROW_H = 46, TOP = 74, BIN_H = 96, SIDE = 40;
+const VW = GAP * (ROWS + 2) + SIDE * 2;
+const VH = TOP + (ROWS - 1) * ROW_H + BIN_H + 58;
+const PEG_R = 5.4, BALL_R = 8.6;
+
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+let scale = 1, ox = 0, oy = 0, dpr = 1;
+
+// Pegs, kept row by row so a ball only ever tests the rows beside it.
+const pegRows = [];
+for(let r = 0; r < ROWS; r++){
+  const n = r + 3;
+  const y = TOP + r * ROW_H;
+  const row = [];
+  for(let i = 0; i < n; i++){
+    row.push({ x: VW/2 + (i - (n-1)/2) * GAP, y, lit: 0 });
+  }
+  pegRows.push({ y, pegs: row });
+}
+const BIN_TOP = TOP + (ROWS - 1) * ROW_H + 34;
+const BIN_W = GAP;
+const BIN_LEFT = VW/2 - (SLOTS.length * BIN_W) / 2;
+
+// ── state ──────────────────────────────────────────────────────────────────
+const STORE = "plinko.bank.v1";
+let balance = 1000, session = 0;
+let dropped = 0, wagered = 0, returned = 0;
+const hits = new Array(SLOTS.length).fill(0);
+const TOP_MULT = Math.max(...SLOTS);
+let topHits = 0;
+const balls = [];
+const queue = [];      // pending drops: {bet}
+let queueTimer = 0;
+const bins = SLOTS.map(() => ({ flash: 0, bump: 0 }));
+const log = [];
+
+try {
+  const raw = localStorage.getItem(STORE);
+  if(raw !== null && isFinite(parseFloat(raw))) balance = Math.max(0, parseFloat(raw));
+} catch(err) { /* storage blocked - play unsaved */ }
+
+const $ = id => document.getElementById(id);
+const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString(undefined,
+  { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+// Long-run chance of landing any slot paying `mult`.
+function slotChance(mult){
+  return SLOTS.reduce((a, m, i) => a + (m === mult ? WEIGHTS[i] : 0), 0);
+}
+
+function theoreticalRTP(){
+  return SLOTS.reduce((a, m, i) => a + m * WEIGHTS[i], 0);
+}
+
+// Draw the slot this ball will land in.
+function pickSlot(){
+  let r = Math.random();
+  for(let i = 0; i < WEIGHTS.length; i++){
+    r -= WEIGHTS[i];
+    if(r <= 0) return i;
+  }
+  return WEIGHTS.length - 1;
+}
+
+function save(){
+  try { localStorage.setItem(STORE, String(balance)); } catch(err) {}
+}
+
+// ── layout ─────────────────────────────────────────────────────────────────
+function resize(){
+  const stage = document.getElementById("stage");
+  const w = stage.clientWidth, h = stage.clientHeight;
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = Math.max(1, Math.round(w * dpr));
+  canvas.height = Math.max(1, Math.round(h * dpr));
+  scale = Math.min(w / VW, h / VH);
+  ox = (w - VW * scale) / 2;
+  oy = (h - VH * scale) / 2;
+}
+addEventListener("resize", resize);
+
+// ── controls ───────────────────────────────────────────────────────────────
+const betInput = $("bet"), countInput = $("count");
+
+function betValue(){
+  const v = parseFloat(betInput.value);
+  return isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : 0;
+}
+function countValue(){
+  const v = parseInt(countInput.value, 10);
+  return isFinite(v) && v > 0 ? Math.min(500, v) : 0;
+}
+
+function refreshCost(){
+  const total = betValue() * countValue();
+  const afford = total > 0 && total <= balance + 1e-9;
+  $("cost").innerHTML = total > 0
+    ? (afford ? `Costs <b>${money(total)}</b>`
+              : `<span class="warn">Need ${money(total)} — you have ${money(balance)}</span>`)
+    : `Set a price and a count`;
+  $("drop").disabled = !afford;
+}
+
+function refreshBank(){ markDirty(); }
+
+function renderBank(){
+  $("balance").textContent = money(balance);
+  const s = $("session");
+  s.textContent = (session >= 0 ? "+" : "") + money(session).replace("-","");
+  s.className = "v " + (session > 0 ? "up" : session < 0 ? "down" : "");
+  $("s-dropped").textContent = dropped.toLocaleString();
+  $("s-wagered").textContent = money(wagered);
+  $("s-returned").textContent = money(returned);
+  $("s-rtp").textContent = wagered > 0 ? (returned / wagered * 100).toFixed(1) + "%" : "—";
+  $("s-tophits").textContent = String(topHits);
+  refreshCost();
+}
+
+let uiDirty = false;
+function markDirty(){ uiDirty = true; }
+
+function flushUI(){
+  if(!uiDirty) return;
+  uiDirty = false;
+  renderLog();
+  renderBank();
+}
+
+function pushLog(mult, payout, bet){
+  log.unshift({ mult, payout, bet });
+  if(log.length > 40) log.pop();
+  markDirty();
+}
+
+function renderLog(){
+  const el = $("log");
+  el.innerHTML = log.map(e => {
+    const net = e.payout - e.bet;
+    const col = net > 0 ? "var(--jade)" : net < 0 ? "#e0705c" : "var(--ash)";
+    return `<div class="row">
+      <span class="m" style="color:${SLOT_COLOR[e.mult]}">${e.mult}×</span>
+      <span class="p" style="color:${col}">${net >= 0 ? "+" : ""}${money(net)}</span>
+    </div>`;
+  }).join("");
+}
+
+betInput.addEventListener("input", refreshCost);
+countInput.addEventListener("input", refreshCost);
+document.querySelectorAll("[data-bet]").forEach(b =>
+  b.addEventListener("click", () => { betInput.value = b.dataset.bet; refreshCost(); }));
+document.querySelectorAll("[data-count]").forEach(b =>
+  b.addEventListener("click", () => { countInput.value = b.dataset.count; refreshCost(); }));
+
+$("drop").addEventListener("click", dropBatch);
+$("reset").addEventListener("click", () => {
+  balance = 1000; session = 0; dropped = 0; wagered = 0; returned = 0;
+  hits.fill(0); log.length = 0; topHits = 0;
+  $("log").innerHTML = `<div class="empty">Nothing dropped yet. Set a price and a count, then drop.</div>`;
+  save(); refreshBank();
+});
+addEventListener("keydown", e => {
+  if(e.key === "Enter" && !$("drop").disabled &&
+     document.activeElement && document.activeElement.tagName === "INPUT"){
+    dropBatch();
+  }
+});
+
+function dropBatch(){
+  const bet = betValue(), n = countValue();
+  const total = bet * n;
+  if(!(total > 0) || total > balance + 1e-9) return;
+  balance -= total;
+  wagered += total;
+  dropped += n;
+  for(let i = 0; i < n; i++) queue.push(bet);
+  save(); refreshBank();
+}
+
+// ── simulation ─────────────────────────────────────────────────────────────
+// Tuned so a ball cascades roughly one gap per row (a binomial walk) instead of
+// skating sideways across the board. VX_MAX is the important one: without it the
+// scatter compounds and the landing distribution flattens to uniform.
+const GRAVITY = 1500, REST = 0.45, MAX_V = 460;
+// Tuned empirically against the 11-row binomial for this board: the landing
+// spread, the 10x hit rate and the RTP all track theory closely. Re-tune these
+// if you change SLOTS - the row count changes with it.
+const VX_DRAG = 0.90, VX_MAX = 280, SCATTER = 140, CONTACT_DAMP = 0.90;
+const STEER = 5.0;   // how hard a ball is pulled toward its assigned slot
+
+function spawn(bet){
+  const target = pickSlot();
+  balls.push({
+    target,
+    targetX: BIN_LEFT + (target + 0.5) * BIN_W,
+    // spread the entry a little: identical spawn points stack into a visible
+    // clump when a large batch is streaming out
+    x: VW/2 + (Math.random() - 0.5) * 17,
+    y: TOP - 46 - Math.random() * 10,
+    vx: (Math.random() - 0.5) * 60,
+    vy: 0,
+    bet,
+    dead: 0,
+    landed: -1,
+    lastPeg: null,
+    trail: []
+  });
+}
+
+function step(dt){
+  // release queued balls on a stagger so a batch reads as a stream
+  if(queue.length){
+    queueTimer -= dt;
+    while(queue.length && queueTimer <= 0){
+      spawn(queue.shift());
+      queueTimer += Math.max(0.05, 0.12 - queue.length * 0.0005);
+    }
+  }
+
+  const SUB = 3, h = dt / SUB;
+  for(let s = 0; s < SUB; s++){
+    for(let i = balls.length - 1; i >= 0; i--){
+      const b = balls[i];
+      if(b.landed >= 0){ b.dead += h; continue; }
+
+      b.vy = Math.min(MAX_V, b.vy + GRAVITY * h);
+      b.vx *= Math.pow(VX_DRAG, h * 60);
+      b.x += b.vx * h;
+      b.y += b.vy * h;
+
+      // Resolve against the single deepest peg only. Resolving every overlapping
+      // peg each substep (and re-hitting the same peg on the next one) pumped
+      // lateral energy in and flattened the landing distribution to uniform.
+      const r0 = Math.max(0, Math.floor((b.y - TOP) / ROW_H) - 1);
+      const r1 = Math.min(pegRows.length - 1, r0 + 2);
+      let best = null, bestOverlap = 0;
+      for(let r = r0; r <= r1; r++){
+        const row = pegRows[r];
+        if(Math.abs(row.y - b.y) > ROW_H) continue;
+        for(const p of row.pegs){
+          const dx = b.x - p.x, dy = b.y - p.y;
+          const min = PEG_R + BALL_R;
+          const d2 = dx*dx + dy*dy;
+          if(d2 >= min*min) continue;
+          const overlap = min - Math.sqrt(d2);
+          if(overlap > bestOverlap){ bestOverlap = overlap; best = p; }
+        }
+      }
+      if(best){
+        const min = PEG_R + BALL_R;
+        let dx = b.x - best.x, dy = b.y - best.y;
+        let d = Math.sqrt(dx*dx + dy*dy);
+        if(d === 0){ dx = (Math.random() - 0.5) || 0.1; dy = -1; d = Math.sqrt(dx*dx + 1); }
+        const nx = dx/d, ny = dy/d;
+        b.x = best.x + nx * min;
+        b.y = best.y + ny * min;
+        const vn = b.vx*nx + b.vy*ny;
+        if(vn < 0){
+          b.vx -= (1 + REST) * vn * nx;
+          b.vy -= (1 + REST) * vn * ny;
+        }
+        // scatter only on a fresh peg, so grazing contact cannot kick repeatedly
+        if(b.lastPeg !== best){
+          b.vx += (Math.random() - 0.5) * SCATTER;
+          b.lastPeg = best;
+        }
+        // A real plinko ball sheds most of its energy on every pin; without this
+        // it skims sideways instead of tumbling pin to pin.
+        b.vx *= CONTACT_DAMP;
+        b.vy *= CONTACT_DAMP;
+        best.lit = 1;
+      }
+      // clamp after the collision response, not before it
+      b.vx = Math.max(-VX_MAX, Math.min(VX_MAX, b.vx));
+
+      // Steer toward the slot this ball drew. The pull ramps in as it falls, so
+      // the early rows still bounce freely and only the last stretch converges.
+      const prog = Math.max(0, Math.min(1, (b.y - TOP) / (BIN_TOP - TOP)));
+      b.vx += (b.targetX - b.x) * STEER * prog * prog * h;
+      // Final approach: close the gap outright so a ball is never seen dropping
+      // into one pocket while paying out another.
+      if(b.y > BIN_TOP - 90){
+        const k = Math.min(1, (b.y - (BIN_TOP - 90)) / 90);
+        b.x += (b.targetX - b.x) * k * k * 0.28;
+      }
+
+      // side walls
+      const lo = BIN_LEFT + BALL_R, hi = BIN_LEFT + SLOTS.length * BIN_W - BALL_R;
+      if(b.x < lo){ b.x = lo; b.vx = Math.abs(b.vx) * REST; }
+      if(b.x > hi){ b.x = hi; b.vx = -Math.abs(b.vx) * REST; }
+
+      // into a bin — the slot was decided at release
+      if(b.y >= BIN_TOP){
+        b.snapError = Math.abs(b.x - b.targetX);   // how much the snap had to fix
+        b.x = b.targetX;
+        settle(b, b.target);
+      }
+    }
+  }
+
+  for(let i = balls.length - 1; i >= 0; i--){
+    if(balls[i].dead > 0.5) balls.splice(i, 1);
+  }
+  for(const row of pegRows) for(const p of row.pegs) p.lit *= 0.86;
+  for(const bin of bins){ bin.flash *= 0.9; bin.bump *= 0.84; }
+}
+
+function settle(b, idx){
+  b.landed = idx;
+  b.vx = 0; b.vy = 0;
+  const mult = SLOTS[idx];
+  const payout = Math.round(b.bet * mult * 100) / 100;
+  balance += payout;
+  returned += payout;
+  session += payout - b.bet;
+  hits[idx]++;
+  if(mult === TOP_MULT) topHits++;
+  bins[idx].flash = 1;
+  bins[idx].bump = 1;
+  pushLog(mult, payout, b.bet);
+  save();
+  markDirty();
+}
+
+// ── rendering ──────────────────────────────────────────────────────────────
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+function draw(){
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.scale(scale, scale);
+
+  // lacquered field under a single overhead lamp
+  const lamp = ctx.createRadialGradient(VW/2, -40, 20, VW/2, VH*0.55, VH*1.05);
+  lamp.addColorStop(0, "#3a2a22");
+  lamp.addColorStop(0.45, "#241a16");
+  lamp.addColorStop(1, "#140f0d");
+  ctx.fillStyle = lamp;
+  roundRect(SIDE*0.4, 8, VW - SIDE*0.8, VH - 16, 16);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(201,162,39,.18)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // drop chute
+  ctx.fillStyle = "rgba(201,162,39,.12)";
+  roundRect(VW/2 - 26, 12, 52, 40, 8);
+  ctx.fill();
+  ctx.fillStyle = "rgba(244,236,224,.30)";
+  ctx.font = "600 10px ui-monospace, monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("DROP", VW/2, 37);
+
+  // pegs, each with a small cast shadow so the lamp reads as real
+  for(const row of pegRows){
+    for(const p of row.pegs){
+      ctx.fillStyle = "rgba(0,0,0,.45)";
+      ctx.beginPath(); ctx.arc(p.x, p.y + 2.4, PEG_R, 0, Math.PI*2); ctx.fill();
+      if(p.lit > 0.02){
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.fillStyle = `rgba(255,224,138,${p.lit * 0.5})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, PEG_R + 7 * p.lit, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+      const g = ctx.createLinearGradient(p.x - PEG_R, p.y - PEG_R, p.x + PEG_R, p.y + PEG_R);
+      g.addColorStop(0, p.lit > 0.02 ? "#fff2c8" : "#e8cf7a");
+      g.addColorStop(1, "#8a6d18");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(p.x, p.y, PEG_R, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  drawBins();
+
+  // balls
+  for(const b of balls){
+    const fade = b.landed >= 0 ? Math.max(0, 1 - b.dead / 0.5) : 1;
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = "rgba(0,0,0,.4)";
+    ctx.beginPath(); ctx.arc(b.x, b.y + 2.5, BALL_R, 0, Math.PI*2); ctx.fill();
+    const bg = ctx.createRadialGradient(b.x - 3, b.y - 4, 1, b.x, b.y, BALL_R);
+    bg.addColorStop(0, "#fffaf0");
+    bg.addColorStop(0.55, "#e9d9be");
+    bg.addColorStop(1, "#a8906a");
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(b.x, b.y, BALL_R, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+}
+
+function drawBins(){
+  const maxHit = Math.max(1, ...hits);
+  for(let i = 0; i < SLOTS.length; i++){
+    const m = SLOTS[i];
+    const col = SLOT_COLOR[m];
+    const x = BIN_LEFT + i * BIN_W;
+    const bin = bins[i];
+    const lift = bin.bump * 5;
+
+    // live histogram: the board showing you its own distribution
+    if(hits[i] > 0){
+      const hgt = (hits[i] / maxHit) * (BIN_H - 34);
+      ctx.fillStyle = "rgba(255,255,255,.045)";
+      roundRect(x + 3, BIN_TOP + BIN_H - hgt - 2, BIN_W - 6, hgt, 3);
+      ctx.fill();
+    }
+
+    ctx.save();
+    ctx.translate(0, lift);
+
+    if(bin.flash > 0.02){
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = col;
+      ctx.globalAlpha = bin.flash * 0.4;
+      roundRect(x + 1, BIN_TOP - 6, BIN_W - 4, 46, 8);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const g = ctx.createLinearGradient(0, BIN_TOP, 0, BIN_TOP + 40);
+    g.addColorStop(0, col);
+    g.addColorStop(1, shade(col, -0.42));
+    ctx.fillStyle = g;
+    roundRect(x + 2, BIN_TOP, BIN_W - 4, 38, 7);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(255,255,255,${0.10 + bin.flash * 0.5})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = m === 0 ? "rgba(244,236,224,.5)" : "#1a1210";
+    ctx.font = `700 ${m >= 10 ? 15 : 14}px ui-monospace, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(m + "×", x + BIN_W/2, BIN_TOP + 20);
+
+    ctx.fillStyle = "rgba(244,236,224,.34)";
+    ctx.font = "600 9px ui-monospace, monospace";
+    ctx.fillText(hits[i] ? String(hits[i]) : "", x + BIN_W/2, BIN_TOP + 50);
+
+    ctx.restore();
+  }
+  ctx.textBaseline = "alphabetic";
+}
+
+function shade(hex, amt){
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  const f = v => Math.max(0, Math.min(255, Math.round(v * (1 + amt))));
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
+}
+
+// ── loop ───────────────────────────────────────────────────────────────────
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(0.04, (now - last) / 1000);
+  last = now;
+  step(dt);
+  flushUI();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+$("theo").textContent = (theoreticalRTP() * 100).toFixed(1) + "%";
+$("s-top").textContent = (slotChance(TOP_MULT) * 100).toFixed(1) + "%";
+$("tagline").textContent = `${SLOTS.length} SLOTS · ${ROWS} ROWS · ${TOP_MULT}× AT ${(slotChance(TOP_MULT)*100).toFixed(1)}%`;
+resize();
+renderLog();
+renderBank();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

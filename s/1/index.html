@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shortlink — version 1</title>
+<script>
+// The three codec versions live on one page now. Forward whatever code this
+// URL carries to /s/, naming the version so its codec is tried first.
+(function () {
+  var dir = location.pathname.replace(/[^/]*$/, '');
+  var tail = location.pathname.slice(dir.length);
+  if (tail === 'index.html') tail = '';
+  // A code never holds '/' or '#', but the Base81 alphabet includes '?', which
+  // the browser would have split off into location.search.
+  var code = tail ? tail + location.search
+                  : (location.hash.length > 1 ? location.hash.slice(1) : '');
+  location.replace('../' + (code ? '?v=1#' + code : ''));
+})();
+</script>
+</head>
+<body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#070b12;color:#96a3b7;font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif">
+<p>The shortlink lab is now a single page — <a href="../" style="color:#93c5fd">continue to /s/</a>.</p>
+</body>
+</html>
