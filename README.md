@@ -76,16 +76,26 @@ navigated to when it is an absolute `http(s)` URL.
 
 ### Preset links
 
-Version 5 is a table of 70 well-known destinations that ships with the site, so
-they cost one or two characters — `/s/#1` is youtube.com, `/s/#42` is Steam.
+Version 5 is a table of 90 well-known destinations that ships with the site, so
+they cost one or two characters — `/s/#1` is youtube.com, `/s/#g` is GitHub.
 Nothing is compressed: the code *is* the lookup key, which is why these reach
 lengths no general codec can. Versions 1–4 carry the whole URL, and the shortest
 code any of them produces is 7 characters, so the 1–2 character space is the
 table's alone and no link minted before it can be shadowed.
 
+Keys are drawn from the same 81-character url-safe set the codes use, one or two
+characters deep — `81 + 81² = 6642` slots, of which 120 are assigned. That set
+is exactly the fragment-safe characters (unreserved, sub-delims, `:` `@` `/`
+`?`); going wider to all printable ASCII would add `" < > \ ^ { } | [ ]`, which
+chat clients and markdown auto-linkers truncate links on.
+
+A destination may have several keys. The numeric keys handed out first still
+decode, and popular entries gained one-character aliases — encoding always picks
+the shortest, ties breaking alphabetically so the choice is stable across builds.
+Keys are permanent: reassigning one silently redirects every link already handed
+out, so append, never reassign.
+
 Only the destination itself is preset — `youtube.com/watch?v=…` encodes in full.
-Preset keys are permanent: reassigning one silently redirects every link already
-handed out, so append, never reassign.
 
 ### Generating
 

@@ -19,6 +19,7 @@ var CODECS = {
   // link already handed out. Append, never reassign.
   5: (function () {
     var PRESETS = {
+      // the original keys — permanent, never reassigned
       '0': 'https://google.com/',
       '1': 'https://youtube.com/',
       '2': 'https://facebook.com/',
@@ -89,12 +90,75 @@ var CODECS = {
       '67': 'https://shopify.com/',
       '68': 'https://stripe.com/',
       '69': 'https://cloudflare.com/',
+
+      // one-character aliases; the numeric keys above still decode
+      'g': 'https://github.com/',
+      'n': 'https://netflix.com/',
+      't': 'https://tiktok.com/',
+      'l': 'https://linkedin.com/',
+      'w': 'https://whatsapp.com/',
+      'd': 'https://discord.com/',
+      'v': 'https://twitch.tv/',
+      'm': 'https://spotify.com/',
+      'a': 'https://apple.com/',
+      'M': 'https://microsoft.com/',
+      'e': 'https://mail.google.com/',
+      'D': 'https://drive.google.com/',
+      'o': 'https://docs.google.com/',
+      'p': 'https://maps.google.com/',
+      'h': 'https://news.ycombinator.com/',
+      's': 'https://stackoverflow.com/',
+      'E': 'https://ebay.com/',
+      'P': 'https://paypal.com/',
+      'S': 'https://store.steampowered.com/',
+      'r': 'https://roblox.com/',
+      'W': 'https://wikipedia.org/',
+      'R': 'https://reddit.com/',
+      'A': 'https://archive.org/',
+      'O': 'https://openai.com/',
+      'T': 'https://twitter.com/',
+      'i': 'https://imdb.com/',
+      'N': 'https://nytimes.com/',
+      'b': 'https://bbc.com/',
+      'c': 'https://cnn.com/',
+      'L': 'https://gitlab.com/',
+
+      // destinations added once the wider key set opened these up
+      'f': 'https://figma.com/',
+      'k': 'https://kaggle.com/',
+      'q': 'https://quora.com/',
+      'u': 'https://udemy.com/',
+      'z': 'https://zoom.us/',
+      'j': 'https://notion.so/',
+      'x': 'https://bsky.app/',
+      'y': 'https://yelp.com/',
+      'B': 'https://bandcamp.com/',
+      'C': 'https://canva.com/',
+      'F': 'https://flickr.com/',
+      'H': 'https://hulu.com/',
+      'J': 'https://jetbrains.com/',
+      'K': 'https://khanacademy.org/',
+      'U': 'https://unsplash.com/',
+      'V': 'https://vercel.com/',
+      'X': 'https://xkcd.com/',
+      'Y': 'https://ycombinator.com/',
+      'Z': 'https://zillow.com/',
+      'I': 'https://ikea.com/',
     };
+    // Keys come from the same 81-character URL-safe set the codecs use, at one
+    // or two characters: 81 + 81^2 = 6642 addressable slots. A destination may
+    // have several keys — the numeric ones handed out first still decode — so
+    // encoding picks the shortest, and ties break alphabetically to keep the
+    // choice stable across builds.
+    var KEYSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._~!$&'()*+,;=:@/?";
     var BY_URL = {};
     for (var k in PRESETS) {
-      if (BY_URL[PRESETS[k]]) throw new Error('duplicate preset url: ' + PRESETS[k]);
-      if (k.length > 2) throw new Error('preset code too long: ' + k);
-      BY_URL[PRESETS[k]] = k;
+      if (k.length < 1 || k.length > 2) throw new Error('preset key must be 1-2 characters: ' + k);
+      for (var ci = 0; ci < k.length; ci++) {
+        if (KEYSET.indexOf(k[ci]) < 0) throw new Error('preset key outside the url-safe set: ' + k);
+      }
+      var cur = BY_URL[PRESETS[k]];
+      if (!cur || k.length < cur.length || (k.length === cur.length && k < cur)) BY_URL[PRESETS[k]] = k;
     }
 
     function addScheme(s) {
