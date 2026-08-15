@@ -33,7 +33,9 @@ miniplay/
   Games/        one directory per game
   Apps/         MP3 player, Paint, Periodic Speller
 s/
-  index.html    the whole lab: all three codecs, encoder, decoder, resolver
+  codecs.js     all four codecs, resolve() and encodeBest() — one shared copy
+  index.html    the page: url in, link out
+  api/gen/      GET /s/api/gen/#<url> -> JSON
   1/ 2/ 3/      redirects, kept so links already shared keep resolving
 docs/           design docs
 ```
@@ -71,6 +73,35 @@ A destination typed without a scheme (`youtube.com`) is encoded as
 `https://youtube.com` so the link actually redirects. Anything that isn't
 host-shaped is left alone and never followed — a decoded value is only
 navigated to when it is an absolute `http(s)` URL.
+
+### Generating
+
+`encodeBest()` runs every codec, keeps the shortest code, then re-checks that
+candidate through `resolve()` untargeted — the exact path a bare `/s/#<code>`
+link takes — before handing it out. A codec round-tripping its own output is not
+enough on its own: versions 1–3 put no version tag in a code, so a short code
+minted by one can also be valid input to another and decode to something else.
+The shortest candidate that survives the real resolution path is the one you get.
+
+### API
+
+```
+GET /s/api/gen/#<url>          -> JSON
+    ?emoji=1                   allow the emoji alphabet
+    ?pretty=0                  compact output
+```
+
+```json
+{ "ok": true, "url": "…", "link": "…", "code": "…",
+  "chars": 25, "original": 68, "version": 2,
+  "strategy": "URL grammar → Base81", "emoji": false }
+```
+
+The url rides in the fragment, so it never reaches a server — which also means
+`curl` cannot drive this. It is a browser and bookmarklet endpoint; there is no
+server here to run anything. Errors come back as `{"ok": false, "error": …}`,
+including for a target that isn't an absolute `http(s)` URL, since the resolver
+would never follow such a link.
 
 ### Emoji mode
 
