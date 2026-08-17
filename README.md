@@ -1,13 +1,14 @@
 # austin-code.com
 
-Two static projects behind one launcher — no build step, no server, no external
-CDN calls.
+Three static projects behind one launcher — no build step, no server, no
+external CDN calls.
 
 | Path | What |
 |---|---|
 | `/` | launcher |
 | `/miniplay` | a browser game hub — **43 games** and **3 apps** |
-| `/s/#<code>` | the shortlink lab — all three codecs on one page |
+| `/s/#<code>` | the shortlink lab — all the codecs on one page |
+| `/firmware` | firmware built for my own hardware, listed per device |
 
 ## Running it
 
@@ -32,6 +33,8 @@ miniplay/
   index.html    the hub: styles, cards, registry and player
   Games/        one directory per game
   Apps/         MP3 player, Paint, Periodic Speller
+firmware/
+  index.html    device catalogue: category -> device -> firmware list
 s/
   codecs.js     all four codecs, resolve() and encodeBest() — one shared copy
   index.html    the page: url in, link out
@@ -43,6 +46,21 @@ docs/           design docs
 Adding a game means two edits to `miniplay/index.html`: an entry in the `games`
 registry and a matching `<article class="game-card">`. The `data-id` must match
 the registry key and `data-game-id` must match the registry `id`.
+
+## Firmware
+
+`firmware/index.html` renders a catalogue from a single `CATEGORIES` structure:
+a category holds devices, and every device holds its own firmware list. Adding a
+board or a build is one edit to that array — nothing else in the page changes.
+
+Currently one category (Smartwatches) with the Waveshare
+**ESP32-S3-Touch-AMOLED-2.06**, carrying two builds of
+[WatchOS](https://github.com/Code-X86/WatchOS): the active Arduino firmware and
+the archived ESP-IDF architecture it grew out of.
+
+Entries link to source rather than hosting images. GitHub warns above 50 MB per
+file and Pages caps a repo near 1 GB, so binaries do not belong here even when
+they would fit.
 
 ## Shortlink routing
 

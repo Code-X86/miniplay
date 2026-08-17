@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>austin-code.com</title>
-  <meta name="description" content="Mini Play — a static browser game hub. Shortlink — a static URL codec.">
+  <meta name="description" content="Mini Play — a static browser game hub. Shortlink — a static URL codec. Firmware — builds for my own hardware.">
   <script>
     // The hub used to live at the root, so deep links look like austin-code.com/#tetris.
     // Forward them rather than dropping people on a launcher that ignores the hash.
@@ -76,7 +76,7 @@
 
     .cards {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
     }
 
@@ -112,6 +112,8 @@
 
     .card[data-target="shortlink"] { --card-accent: var(--amber); }
 
+    .card[data-target="firmware"] { --card-accent: #5fb2ff; }
+
     .card h2 {
       margin: 0 0 6px;
       font-size: 24px;
@@ -141,7 +143,7 @@
       font-size: 13px;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 880px) {
       .cards { grid-template-columns: 1fr; }
     }
   </style>
@@ -149,7 +151,7 @@
 <body>
   <main class="wrap">
     <h1 class="brand">austin<span>-code</span></h1>
-    <p class="lede">Two static projects, no build step and no server between you and them.</p>
+    <p class="lede">Three static projects, no build step and no server between you and them.</p>
 
     <div class="cards">
       <a class="card" data-target="miniplay" href="miniplay/">
@@ -161,7 +163,13 @@
       <a class="card" data-target="shortlink" href="s/">
         <h2>Shortlink</h2>
         <p>A URL codec that packs a link into the address itself. No database.</p>
-        <span class="path">/s/&lt;version&gt;/&lt;code&gt;</span>
+        <span class="path">/s/#&lt;code&gt;</span>
+      </a>
+
+      <a class="card" data-target="firmware" href="firmware/">
+        <h2>Firmware</h2>
+        <p>Builds for my own hardware, listed per device.</p>
+        <span class="path">/firmware</span>
       </a>
     </div>
 
