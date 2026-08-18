@@ -62,6 +62,14 @@ Entries link to source rather than hosting images. GitHub warns above 50 MB per
 file and Pages caps a repo near 1 GB, so binaries do not belong here even when
 they would fit.
 
+An entry with a `repo` field gets a **Check for releases** button that queries
+`api.github.com` for that repo's releases and lists each tag with its date and
+downloadable assets. It is a button rather than a fetch on load on purpose:
+opening this page makes no outside request, which is the promise the rest of the
+site keeps — asking GitHub is something you choose to do. Rate limiting, network
+failure and other HTTP errors are reported rather than swallowed, and the button
+stays usable so you can retry.
+
 ## Shortlink routing
 
 The destination is encoded entirely in the URL — there is no database. All three
